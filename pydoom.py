@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 from PyDoom.WadFile import WadFile
 from PyDoom.MusDecoder import MusDecoder
 
+import logging
 import optparse
 import sys
 
@@ -13,7 +16,6 @@ def main():
         sys.exit("No specified input wad-file provided")
 
     input_wad_file = args[0]
-    print("Loading: " + input_wad_file)
     wad = WadFile(input_wad_file)
 
     #for level_key in wad.wad_levels:
@@ -27,11 +29,19 @@ def main():
 
     # to avoid conflict there can be multiple wad elements
     # of the same name so they are stored in a list
-    level_music = wad['D_INTRO'][0]
-    print("found music lump:", level_music)
+    level_music = wad['D_E1M1'][0]
     decoded = MusDecoder.decode_mus_to_midi(level_music)
-    print("decoded music:", decoded)
 
+    # test play midi file
+    import pygame
+    pygame.init()
+    pygame.mixer.music.load(decoded)
+    pygame.mixer.music.play(0)
+    
+    import time
+    time.sleep(10)
+    
 
 if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     main()

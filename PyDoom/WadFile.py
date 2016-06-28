@@ -2,6 +2,7 @@ from PyDoom.WadException import WadException
 from PyDoom.WadDirectory import WadDirectory
 from PyDoom.WadLevel import WadLevel
 
+import logging
 import struct
 import os
 import re
@@ -108,11 +109,13 @@ class WadFile(dict):
 
                 # Level parser
                 if re.match('E\dM\d|MAP\d\d', name):
+                    logging.debug("New Level: " + name)
                     is_level = True
                     current_level = name
                     current_level_lumps = {}
 
                 if is_level:
+                    logging.debug("Adding lump [%s] to Level [%s]" % (name, current_level))
                     # add the directory to the level
                     current_level_lumps[name] = directory
 
@@ -138,5 +141,6 @@ class WadFile(dict):
                     container.append(directory)
                 except KeyError:
                     container = [directory]
+                    logging.debug("New Directory: " + name)
                 finally:
                     self[name] = container
