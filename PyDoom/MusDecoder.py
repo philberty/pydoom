@@ -4,51 +4,64 @@ import tempfile
 import struct
 
 
-class MusDecoder:
+class MusDecoder(object):
 
     @staticmethod
-    def decode_mus_to_midi(lump):                
+    def decode_mus_to_midi(lump):
+        mus_header = MusDecoder.parse_header(lump)
         decode_buffer = b''
 
         # Start with the MIDI header.
-        struct.pack_into(">BBBB", decode_buffer, 0, "MThd")
-        
+        decode_buffer += struct.pack(">BBBB", ord('M'), ord('T'), ord('h'), ord('d'))
         # Header size.
-        struct.pack_into(">i", decode_buffer, 4, 6)
-        
+        decode_buffer += struct.pack(">i", 6)
         # Format (single track).
-        struct.pack_into(">h", decode_buffer, 8, 0)
-        
+        decode_buffer += struct.pack(">h", 0)
         # Number of tracks.
-        struct.pack_into(">h", decode_buffer, 10, 1)
-        
+        decode_buffer += struct.pack(">h", 1)
         # Delta ticks per quarter note (140).
-        struct.pack_into(">h", decode_buffer, 12, 140)
-        
+        decode_buffer += struct.pack(">h", 140)
         # Track header.
-        struct.pack_into(">BBBB", decode_buffer, 14, "MTrk")
-        
+        decode_buffer += struct.pack(">BBBB", ord('M'), ord('T'), ord('r'), ord('k'))
         # Length of the track in bytes.
         track_size_offset = 18
-        struct.pack_into(">i", decode_buffer, 18, 0) # updated later on
+        decode_buffer += struct.pack(">i", 0) # updated later on
         
         # The first MIDI ev sets the tempo.
-        struct.pack_into(">B", decode_buffer, 22, 0)
-        struct.pack_into(">B", decode_buffer, 23, 0xff)
-        struct.pack_into(">B", decode_buffer, 24, 0x51)
-        struct.pack_into(">B", decode_buffer, 25, 3)
-        struct.pack_into(">B", decode_buffer, 26, 0xf)
-        struct.pack_into(">B", decode_buffer, 27, 0x42)
-        struct.pack_into(">B", decode_buffer, 28, 0x40)
+        decode_buffer += struct.pack(">B", 0)
+        decode_buffer += struct.pack(">B", 0xff)
+        decode_buffer += struct.pack(">B", 0x51)
+        decode_buffer += struct.pack(">B", 3)
+        decode_buffer += struct.pack(">B", 0xf)
+        decode_buffer += struct.pack(">B", 0x42)
+        decode_buffer += struct.pack(">B", 0x40)
+
+        # do
+        lump_score_start_offset = mus_header['score_start']
+        print(lump_score_start_offset)
 
         
         
-        # write to file
-        _, decoded_file_path = tempfile.mkstemp()
-        with open(decoded_file_path, 'rb') as fd:
-            fd.write(decode_buffer)
+        # done
+
+        decode_buffer += struct.pack(">B", 0)
+        decode_buffer += struct.pack(">B", 0xff)
+        decode_buffer += struct.pack(">B", 0x2f)
+        decode_buffer += struct.pack(">B", 0)
+
+        # fix track size
+        memory_view_buffer = bytearray(decode_buffer)
+        track_size = len(decode_buffer) - track_size_offset - 4
+        fixed_track_size = struct.pack(">i", track_size)
+        for i in range(len(fixed_track_size)):
+            memory_view_buffer[track_size_offset + i] = fixed_track_size[i]
         
-        return decoded_file_path
+        # write to file
+        path = './test.mid'
+        with open(path, 'wb') as fd:
+            fd.write(memory_view_buffer)
+        return path
+    
 
     @staticmethod
     def parse_header(lump):
@@ -67,6 +80,7 @@ class MusDecoder:
         return {
             "identifier": identifier,
             "score_length": score_length,
+            "score_start": score_start,
             "channels": channels,
             "sec_channels": sec_channels,
             "instrument_count": instrument_count,
