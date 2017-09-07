@@ -1,8 +1,8 @@
 from PyDoom.WadException import WadException
 from PyDoom.WadDirectory import WadDirectory
 from PyDoom.WadLevel import WadLevel
+from PyDoom import LOG as logger
 
-import logging
 import struct
 import os
 import re
@@ -23,17 +23,25 @@ class WadFile(dict):
 
 ## Constructor
 
-    def __init__(self, wadfile):
+    def __init__(self):
         # init super dict
         super(WadFile, self).__init__()
 
+    @staticmethod
+    def load(wadfile):
         # ensures file exists
         with open(wadfile, "rb"):
-            self._wad_file = os.path.abspath(wadfile)
-            self._verify()
-            self._load_directories()
+            instance = WadFile()
+            instance._wad_file = os.path.abspath(wadfile)
+            instance._verify()
+            instance._load_directories()
+            return instance
 
 ## Properties
+
+    @property
+    def log(self):
+        return logger
 
     @property
     def wad_file_path(self):
@@ -55,32 +63,24 @@ class WadFile(dict):
     def wad_levels(self):
         return self._wad_levels
 
-## Emulation
-
-    def __repr__(self):
-        return "WadFile Object"
-
-    def __str__(self):
-        return "Wad File: %s of type [%s] [nLumps %i]" \
-               % (self.wad_file_path, self.wad_file_type, self.number_of_lumps)
-
 ## Methods
 
-    """
-    Verify this is a valid WAD
-    """
     def _verify(self):
+        """
+        Verify this is a valid WAD
+        """
         with open(self.wad_file_path, "rb") as fd:
             self._wad_type = fd.read(4).decode("utf-8")
             self._number_of_lumps = struct.unpack("<I", fd.read(4))[0]
             self._info_table_offset = struct.unpack("<I", fd.read(4))[0]
+            
             if self.wad_file_type != "IWAD":
                 raise WadException("Found invalid wad file [%s]" % self.wad_file_type)
 
-    """
-    Load the directory table
-    """
     def _load_directories(self):
+        """
+        Load the directory table
+        """
         with open(self.wad_file_path, "rb") as fd:
             # parser state
             is_level = False
@@ -109,13 +109,13 @@ class WadFile(dict):
 
                 # Level parser
                 if re.match('E\dM\d|MAP\d\d', name):
-                    logging.debug("New Level: " + name)
+                    self.log.debug("New Level: " + name)
                     is_level = True
                     current_level = name
                     current_level_lumps = {}
 
                 if is_level:
-                    logging.debug("Adding lump [%s] to Level [%s]" % (name, current_level))
+                    self.log.debug("Adding lump [%s] to Level [%s]" % (name, current_level))
                     # add the directory to the level
                     current_level_lumps[name] = directory
 
@@ -141,6 +141,6 @@ class WadFile(dict):
                     container.append(directory)
                 except KeyError:
                     container = [directory]
-                    logging.debug("New Directory: " + name)
+                    self.log.debug("New Directory: " + name)
                 finally:
                     self[name] = container

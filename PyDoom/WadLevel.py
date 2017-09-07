@@ -92,14 +92,6 @@ class WadLevel:
     def blockmap(self):
         return self._blockmap
 
-## Emulation
-
-    def __repr__(self):
-        return "Wad Level"
-
-    def __str__(self):
-        return "Wad Level: %s" % self._name
-
 ## Methods
 
     def _load_lump_elements(self, lump, element_size):
