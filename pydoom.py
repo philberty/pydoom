@@ -6,6 +6,7 @@ from PyDoom.WadFile import WadFile
 import optparse
 import logging
 import sys
+import os
 
 
 def main():
@@ -22,21 +23,22 @@ def main():
     #     level = wad.wad_levels[level_key]
     #     print (level_key, level)
     #     level.save_svg()
-    #     print("saved image of level [%s]" % level_key)
+    #     print("saved image of level [%s]" % level_key)        
 
-    level2_zombies = tuple(filter(lambda t: t.definition.name == \
-                                  "FORMER_HUMAN",
-                                  wad.wad_levels["E1M2"].things))
 
-    zombie = level2_zombies[0]
-    zombieSprite = zombie.sprite
-    
-    for zombieLumpIndex in range(len(zombieSprite)):
-        zombiePicture = zombieSprite.getDoomPicture(zombieLumpIndex)
-        zombiePrefix = zombie.definition.name + "_" + zombiePicture.name
-        zPath = zombiePrefix + '.png'
-        print("saving:", zPath)
-        zombiePicture.savePng(zPath, wad.playpals[0])
+    for thing in wad.wad_levels["E1M9"].things:
+        if not thing.hasSprite:
+            print("invalid-thing:", str(hex(thing.thing_type)))
+            continue
+        
+        for picture in thing.sprite:
+            if picture.name == "PLAYPAL":
+                continue
+                
+            prefix = thing.definition.name + "_" + picture.name
+            zPath = "saved_out_images/" + prefix + '.png'
+            if not os.path.exists(zPath):
+                picture.savePng(zPath, wad.playpals[0])
     
 
     # to avoid conflict there can be multiple wad elements

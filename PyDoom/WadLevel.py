@@ -110,7 +110,7 @@ class WadLevel:
     def _normalize(self, point):
         return self.shift[0] + point[0], self.shift[1] + point[1]
 
-    def save_svg(self):
+    def save_svg(self, path):
         import svgwrite
 
         # borrowed from https://gist.github.com/jasonsperske/42284303cf6a7ef19dc3
@@ -121,7 +121,7 @@ class WadLevel:
         else:
             canvas_size = (int(1024*(float(view_box_size[0]) / view_box_size[1])), 1024)
 
-        dwg = svgwrite.Drawing(self.name+'.svg', profile='tiny', size=canvas_size , viewBox=('0 0 %d %d' % view_box_size))
+        dwg = svgwrite.Drawing(path, profile='tiny', size=canvas_size , viewBox=('0 0 %d %d' % view_box_size))
         for line in self.linedefs:
             start = self.vertices[line.start_vertex]
             end = self.vertices[line.end_vertex]

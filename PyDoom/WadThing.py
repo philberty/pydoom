@@ -350,6 +350,15 @@ class WadThing(WadElement):
     def definition(self):
         return THING_MAP[self.thing_type]
 
+    def safeDefinition(self, default=None):
+        return THING_MAP.get(self.thing_type, default)
+
+    def thingName(self, defaultName=None):
+        definition = self.safeDefinition(default=None)
+        if definition is None:
+            return defaultName
+        return definition.name
+
     @property
     def associatedLumps(self):
         spritePrefix = self.definition.sprite
@@ -357,9 +366,16 @@ class WadThing(WadElement):
         return tuple(map(lambda i: self._wad[i][0], spriteKeys))
 
     @property
+    def hasDefinition(self):
+        return self.thing_type in THING_MAP
+        
+    @property
+    def hasSprite(self):
+        return self.hasDefinition and self.definition.sprite is not None
+
+    @property
     def sprite(self):
-        hasSprite = self.definition.sprite is not None
-        if not hasSprite:
+        if not self.hasSprite:
             raise Exception("THING [{0}] does not have an associated sprite set" \
                             .format(self.definition.name))
         

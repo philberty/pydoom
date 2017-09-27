@@ -42,8 +42,8 @@ class WadPicture:
 
     def savePng(self, path, palette):
         import png
-        
-        pixels = WadPicture.pixelsToRgbPixels(self.pixels, palette)
+
+        pixels = WadPicture.pixelsToRgbPixels(self.pixels, palette)        
         png.from_array(pixels, 'RGB').save(path)
 
 
@@ -72,6 +72,18 @@ class WadSprite:
 
     def __len__(self):
         return len(self.lumps)
+
+    def __iter__(self):
+        self._iterIndex = 0
+        return self
+
+    def __next__(self):
+        if self._iterIndex >= len(self):
+            raise StopIteration()
+        
+        index = self._iterIndex
+        self._iterIndex += 1
+        return self.getDoomPicture(index)
 
     def getDoomPicture(self, lumpIndex):
         lump = self.lumps[lumpIndex]

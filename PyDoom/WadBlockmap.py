@@ -11,4 +11,3 @@ class WadBlockmap(WadElement):
 
     def __init__(self, chunk):
         super(WadBlockmap, self).__init__()
-        pass
