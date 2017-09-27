@@ -26,11 +26,11 @@ class WadLevel:
 
 ## Constructor
 
-    def __init__(self, name, things, linedefs, sidedefs, vertexes, segs, ssectors, nodes, sectors, reject, blockmap):
+    def __init__(self, name, things, linedefs, sidedefs, vertexes, segs, ssectors, nodes, sectors, reject, blockmap, wad):
         self._name = name
 
         # load lumps into relevant classes
-        self._things = self._load_lump(things, WadThing)
+        self._things = self._load_lump(things, WadThing, wad)
         self._linedefs = self._load_lump(linedefs, WadLinedef)
         self._sidedefs = self._load_lump(sidedefs, WadSidedef)
         self._vertexes = self._load_lump(vertexes, WadVertex)
@@ -103,9 +103,9 @@ class WadLevel:
             elements.append(chunk)
         return elements
 
-    def _load_lump(self, lump, container):
+    def _load_lump(self, lump, container, *args):
         elements = self._load_lump_elements(lump, container.element_size())
-        return list(map(lambda chunk: container(chunk), elements))
+        return list(map(lambda chunk: container(chunk, *args), elements))
 
     def _normalize(self, point):
         return self.shift[0] + point[0], self.shift[1] + point[1]

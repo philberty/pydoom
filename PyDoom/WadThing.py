@@ -1,6 +1,8 @@
 from PyDoom.WadElement import WadElement
+from PyDoom.WadSprite import WadSprite
 
 import struct
+import ctypes
 
 """
 Dec. Hex  V Spr  seq.     Thing is:
@@ -149,6 +151,160 @@ fire
                               (they blow up when killed)
 """
 
+class ThingDefinition:
+
+    def __init__(self, name, sprite):
+        self._name = name
+        self._sprite = sprite
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def sprite(self):
+        return self._sprite
+    
+
+THING_MAP = {
+    0xFFFF: ThingDefinition("UNKNOWN_1", None),
+    0x0000: ThingDefinition("UNKNOWN_2", None),
+    0x0001: ThingDefinition("PLAYER_1_START", "PLAY"),
+    0x0002: ThingDefinition("PLAYER_2_START", "PLAY"),
+    0x0003: ThingDefinition("PLAYER_3_START", "PLAY"),
+    0x0004: ThingDefinition("PLAYER_4_START", "PLAY"),
+    0x000B: ThingDefinition("DEATHMATCH_START_POSITION", None),
+    0x000E: ThingDefinition("TELEPORT_LANDING", None),
+    
+    0x0BBC: ThingDefinition("FORMER_HUMAN", "POSS"),
+    0x0054: ThingDefinition("WOLFENSTEIN_SS", "SSWV"),
+    0x0009: ThingDefinition("FORMER_HUMAN_SERGEANT", "SPOS"),
+    0x0041: ThingDefinition("HEAVY_WEAPON_DUDE", "CPOS"),
+    0x0BB9: ThingDefinition("IMP", "TROO"),
+    0x0BBA: ThingDefinition("DEMON", "SARG"),
+    0x0B3A: ThingDefinition("SPECTRE", "SARG"),
+    0x0BBE: ThingDefinition("LOST_SOUL", "SKUL"),
+    0x0BBD: ThingDefinition("CACODEMON", "HEAD"),
+    0x0045: ThingDefinition("HELL_KNIGHT", "BOS2"),
+    0x0044: ThingDefinition("ARACHNOTRON", "BSPI"),
+    0x0047: ThingDefinition("PAIN_ELEMENTAL", "PAIN"),
+    0x0042: ThingDefinition("REVENANT", "SKEL"),
+    0x0043: ThingDefinition("MANCUBUS", "FATT"),
+    0x0040: ThingDefinition("ARCH_VILE", "VILE"),
+    0x0007: ThingDefinition("SPIDER_MASTERMIND", "SPID"),
+    0x0010: ThingDefinition("CYBER-DEMON", "CYBR"),
+    0x0058: ThingDefinition("BOSS_BRAIN", "BBRN"),
+    0x0059: ThingDefinition("BOSS_SHOOTER", None),
+    0x0057: ThingDefinition("SPAWN_SPOT", None),
+
+    0x07D5: ThingDefinition("CHAINSAW", "CSAW"),
+    0x07D1: ThingDefinition("SHOTGUN", "SHOT"),
+    0x0052: ThingDefinition("DOUBLE_BARRELED_SHOTGUN", "SHN2"),
+    0x07D2: ThingDefinition("CHAINGUN", "MGUN"),
+    0x07D3: ThingDefinition("ROCKET_LAUNCHER", "LAUN"),
+    0x07D4: ThingDefinition("PLASMA_GUN", "PLAS"),
+    0x07D6: ThingDefinition("BFG_9000", "BFUG"),
+    0x07D7: ThingDefinition("AMMO_CLIP", "CLIP"),
+    0x07D8: ThingDefinition("SHELLS", "SHEL"),
+    0x07DA: ThingDefinition("ROCKET", "ROCK"),
+    0x07FF: ThingDefinition("CELL_CHARGE", "CELL"),
+    0x0800: ThingDefinition("BOX_O_AMMO", "AMMO"),
+    0x0801: ThingDefinition("BOX_O_SHELLS", "SBOX"),
+    0x07FE: ThingDefinition("BOX_O_ROCKETS", "BROK"),
+    0x0011: ThingDefinition("CELL_CHARGE_PACK", "CELP"),
+    0x0008: ThingDefinition("BACKPACK", "BPAK"),
+
+    0x07DB: ThingDefinition("STIMPACK", "STIM"),
+    0x07DC: ThingDefinition("MEDIPACK", "MEDI"),
+    0x07DE: ThingDefinition("POTION_1", "BON1"),
+    0x07DF: ThingDefinition("POTION_2", "BON2"),
+    0x07E2: ThingDefinition("GREEN_ARMOR", "ARM1"),
+    0x07E3: ThingDefinition("BLUE_ARMOR", "ARM2"),
+    0x0053: ThingDefinition("MEGASPHERE", "MEGA"),
+    0x07DD: ThingDefinition("SOULSPHERE", "SOUL"),
+    0x07E6: ThingDefinition("INVULNERABILITY", "PINV"),
+    0x07E7: ThingDefinition("BESERKER", "PSTR"),
+    0x07E8: ThingDefinition("INVISIBILITY", "PINS"),
+    0x07E9: ThingDefinition("RAD_SUIT", "SUIT"),
+    0x07EA: ThingDefinition("COMPUTER_MAP", "PMAP"),
+    0x07FD: ThingDefinition("AMP_GOGGLES", "PVIS"),
+
+    0x0005: ThingDefinition("BLUE_KEY", "BKEY"),
+    0x0028: ThingDefinition("BLUE_SKULL_KEY", "BSKU"),
+    0x000D: ThingDefinition("RED_KEY", "RKEY"),
+    0x0026: ThingDefinition("RED_SKULL_KEY", "RSKU"),
+    0x0006: ThingDefinition("YELLOW_KEY", "YKEY"),
+    0x0027: ThingDefinition("YELLOW_SKULL_KEY", "YSKU"),
+
+    0x07F3: ThingDefinition("BARREL", "BAR1"),
+    0x0048: ThingDefinition("KEEN_BILLY", "KEEN"),
+
+    0x0030: ThingDefinition("TALL_TECHNO_PILLAR", "ELEC"),
+    0x001E: ThingDefinition("TALL_GREEN_PILLAR", "COL1"),
+    0x0020: ThingDefinition("TALL_RED_PILLAR", "COL3"),
+    0x001F: ThingDefinition("SHORT_GREEN_PILLAR", "COL2"),
+    0x0024: ThingDefinition("SHORT_GREEN_PILLAR_BEATING_HEART", "COL5"),
+    0x0021: ThingDefinition("SHORT_RED_PILLAR", "COL4"),
+    0x0025: ThingDefinition("SHORT_RED_PILLAR_SKULL", "COL6"),
+    0x002F: ThingDefinition("STALAGMITE", "SMIT"),
+    0x002B: ThingDefinition("BURNT_TREE", "TRE1"),
+    0x0036: ThingDefinition("LARGE_TREE", "TRE2"),
+
+    0x07EC: ThingDefinition("FLOOR_LAMP", "COLU"),
+    0x0055: ThingDefinition("TALL_TECHNO_FLOOR_LAMP", "TLMP"),
+    0x0056: ThingDefinition("SHORT_TECHNO_FLOOR_LAMP", "TLP2"),
+    0x0022: ThingDefinition("CANDLE", "CAND"),
+    0x0023: ThingDefinition("CANDLELABRA", "CBRA"),
+    0x002C: ThingDefinition("TALL_BLUE_FIRESTICK", "TBLU"),
+    0x002D: ThingDefinition("TALL_GREEN_FIRESTICK", "TGRE"),
+    0x002E: ThingDefinition("TALL_RED_FIRESTICK", "TRED"),
+    0x0037: ThingDefinition("SHORT_BLUE_FIRESTICK", "SMBT"),
+    0x0038: ThingDefinition("SHORT_GREEN_FIRESTICK", "SMGT"),
+    0x0039: ThingDefinition("SHORT_RED_FIRESTICK", "SMRT"),
+    0x0046: ThingDefinition("BURNING_BARREL", "FCAN"),
+
+    0x0029: ThingDefinition("EVIL_EYE", "CEYE"),
+    0x002A: ThingDefinition("FLOATING_SKULL", "FSKU"),
+    
+    0x0031: ThingDefinition("HANGING_VICTIM", "GOR1"),
+    0x003F: ThingDefinition("HANGING_VICTIM_TWITCHING", "GOR1"),
+    0x0032: ThingDefinition("HANGING_VICTIM_ARMS_OUT", "GOR2"),
+    0x003B: ThingDefinition("HANGING_VICTIM_ARMS_OUT", "GOR2"),
+    0x0034: ThingDefinition("HANGING_PAIR_LEGS", "GOR4"),
+    0x003C: ThingDefinition("HANGING_PAIR_LEGS", "GOR4"),
+    0x0033: ThingDefinition("HANGING_VICTIM_ONE_LEG", "GOR3"),
+    0x003D: ThingDefinition("HANGING_VICTIM_ONE_LEG", "GOR3"),
+    
+    0x0035: ThingDefinition("HANGING_LEG", "GOR5"),
+    0x003E: ThingDefinition("HANGING_LEG", "GOR5"),
+    0x0049: ThingDefinition("HANGING_VICTIM_GUTS_REMOVED", "HDB1"),
+    0x004A: ThingDefinition("HANGING_VICTIM_GUTS_BRAIN_REMOVED", "HDB2"),
+    0x004B: ThingDefinition("HANGING_TORSODOWN_DOWN", "HDB3"),
+    0x004C: ThingDefinition("HANGING_TORSODOWN_OPEN_SKULL", "HDB4"),
+    0x004D: ThingDefinition("HANGING_TORSODOWN_UP", "HDB5"),
+    0x004E: ThingDefinition("HANGING_TORSODOWN_BRAIN_REMOVED", "HDB6"),
+
+    0x0019: ThingDefinition("IMPALED_HUMAN", "POL1"),
+    0x001A: ThingDefinition("TWITCHING_IMPLAED_HUMAN", "POL6"),
+    0x001B: ThingDefinition("SKULL_ON_POLE", "POL4"),
+    0x001C: ThingDefinition("SKULLS_SHISH_KEBAB", "POL2"),
+    0x001D: ThingDefinition("PILE_OF_SKULLS_AND_CANDLES", "POL3"),
+    0x000A: ThingDefinition("BLOODY_MESS_EXPLODED_PLAYER", "PLAY"),
+    0x000C: ThingDefinition("BLOODY_MESS_EXPLODED_PLAYER", "PLAY"),
+    0x0018: ThingDefinition("POOL_OF_BLOOD_AND_FLESH", "POL5"),
+    0x004F: ThingDefinition("POOL_OF_BLOOD1", "POB1"),
+    0x0050: ThingDefinition("POOL_OF_BLOOD2", "POB2"),
+    0x0051: ThingDefinition("POOL_OF_BRAINS", "BRS1"),
+    0x000F: ThingDefinition("DEAD_PLAYER", "PLAY"),
+    0x0012: ThingDefinition("DEAD_FORMER_HUMAN", "POSS"),
+    0x0013: ThingDefinition("DEAD_FORMER_SERGENT", "SPOS"),
+    0x0014: ThingDefinition("DEAD_IMP", "TROO"),
+    0x0015: ThingDefinition("DEAD_DEMON", "SARG"),
+    0x0016: ThingDefinition("DEAD_CACODEOMON", "HEAD"),
+    0x0017: ThingDefinition("DEAD_LOST_SOUL_INVISIBLE", "SKUL")
+}
+
+
 class WadThing(WadElement):
 
     """
@@ -161,8 +317,9 @@ class WadThing(WadElement):
     _thing_type = None
     _flags = None
 
-    def __init__(self, chunk):
+    def __init__(self, chunk, wad):
         super(WadThing, self).__init__()
+        self._wad = wad
         self._x, \
             self._y, \
             self._angle, \
@@ -188,6 +345,25 @@ class WadThing(WadElement):
     @property
     def flags(self):
         return self._flags
+
+    @property
+    def definition(self):
+        return THING_MAP[self.thing_type]
+
+    @property
+    def associatedLumps(self):
+        spritePrefix = self.definition.sprite
+        spriteKeys = filter(lambda i: i.startswith(spritePrefix), self._wad)
+        return tuple(map(lambda i: self._wad[i][0], spriteKeys))
+
+    @property
+    def sprite(self):
+        hasSprite = self.definition.sprite is not None
+        if not hasSprite:
+            raise Exception("THING [{0}] does not have an associated sprite set" \
+                            .format(self.definition.name))
+        
+        return WadSprite(self, self.associatedLumps)
 
     @staticmethod
     def element_size():

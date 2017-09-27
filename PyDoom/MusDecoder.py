@@ -12,293 +12,504 @@ import io
 
 # https://github.com/kripken/boon/blob/master/src/mmus2mid.c
 
+MIDI_TRACKS = 32
+
+# C Major
+midikey = [
+    ctypes.c_uint8(0x00).value,
+    ctypes.c_uint8(0xff).value,
+    ctypes.c_uint8(0x59).value,
+    ctypes.c_uint8(0x02).value,
+    ctypes.c_uint8(0x00).value,
+    ctypes.c_uint8(0x00).value
+]
+
+# uS/qnote
+miditempo = [
+    ctypes.c_uint8(0x00).value,
+    ctypes.c_uint8(0xff).value,
+    ctypes.c_uint8(0x51).value,
+    ctypes.c_uint8(0x03).value,
+    ctypes.c_uint8(0x09).value,
+    ctypes.c_uint8(0xa3).value,
+    ctypes.c_uint8(0x1a).value
+]
+
+# header (length 6, format 1)
+midihdr = [
+    ctypes.c_uint8(ord('M')).value,
+    ctypes.c_uint8(ord('T')).value,
+    ctypes.c_uint8(ord('h')).value,
+    ctypes.c_uint8(ord('d')).value,
+    ctypes.c_uint8(0).value,
+    ctypes.c_uint8(0).value,
+    ctypes.c_uint8(0).value,
+    ctypes.c_uint8(6).value,
+    ctypes.c_uint8(0).value,
+    ctypes.c_uint8(1).value,
+    ctypes.c_uint8(0).value,
+    ctypes.c_uint8(0).value,
+    ctypes.c_uint8(0).value,
+    ctypes.c_uint8(0).value
+]
+
+# track header
+trackhdr = [
+    ctypes.c_uint8(ord('M')).value,
+    ctypes.c_uint8(ord('T')).value,
+    ctypes.c_uint8(ord('r')).value,
+    ctypes.c_uint8(ord('k')).value
+]
+
+
+class TrackInfo:
+
+    def __init__(self):
+        self._velocity = None
+        self._deltaT = None
+        self._lastEvent = None
+
+    @property
+    def velocity(self):
+        return self._velocity.value
+
+    @velocity.setter
+    def velocity(self, value):
+        self._velocity = ctypes.c_char(value)
+
+    @property
+    def deltaT(self):
+        return self._deltaT.value
+
+    @deltaT.setter
+    def deltaT(self, value):
+        self._deltaT = ctypes.c_long(value)
+
+    @property
+    def lastEvent(self):
+        return self._lastEvent.value
+
+    @lastEvent.setter
+    def lastEvent(self, value):
+        self._lastEvent = ctypes.c_uint8(value)
+
+
+class Midi:
+    divisions = 0
+    
+    tracks = list(map(lambda i: [], range(MIDI_TRACKS)))
+
+    @property
+    def trackCount(self):
+        return len(list(filter(lambda i: len(i) > 0, self.tracks)))
+
 
 class MusEvent:
 
     RELEASE_NOTE = 0
     PLAY_NOTE = 1
-    PITCH_WHEEL = 2
+    BEND_NOTE = 2
     SYSTEM = 3
     CONTROLLER = 4
-    FIVE = 5
+    UNKNOWN_EVENT_1 = 5
     SCORE_END = 6
-    SEVEN = 7
+    UNKNOWN_EVENT_2 = 7
 
 
 class MusControllers:
 
     INSTRUMENT = 0
-    BANK = 1
-    MODULATION = 2
-    VOLUME = 3
-    PAN = 4
-    EXPRESSION = 5
-    REVERB = 6
-    CHOROUS = 7
-    SUSTAIN_PEDAL = 8
-    SOFT_PEDAL = 9
-
-    # VALUELESS CONTROLLERS
-    
-    SOUNDS_OFF = 10
-    NOTES_OFF = 11
-    MONO = 12
-    POLY = 13
-    RESET_ALL = 14
-    NUM_CTRLS = 15
+    BANK = 0x00
+    MODULATION = 0x01
+    VOLUME = 0x07
+    PAN = 0x0A
+    EXPRESSION = 0x0B
+    REVERB = 0x5B
+    CHOROUS = 0x5D
+    SUSTAIN_PEDAL = 0x40
+    SOFT_PEDAL = 0x43
+    SOUNDS_OFF = 0x78
+    NOTES_OFF = 0x7B
+    MONO = 0x7E
+    POLY = 0x7F
+    RESET_ALL = 0x79
 
     
 ctrlMus2Midi = [
-    0, # Not used.
-    0, # Bank select.
-    1, # Modulation.
-    7, # Volume.
-    10, # Pan.
-    11, # Expression.
-    91, # Reverb.
-    93, # Chorus.
-    64, # Sustain pedal.
-    67, # Soft pedal.
+    0,    # Not used.
+    0x00, # Bank select.
+    0x01, # Modulation.
+    0x07, # Volume.
+    0x0A, # Pan.
+    0x0B, # Expression.
+    0x5B, # Reverb.
+    0x5D, # Chorus.
+    0x40, # Sustain pedal.
+    0x43, # Soft pedal.
     
     # The valueless controllers:
-    120, # All sounds off.
-    123, # All notes off.
-    126, # Mono.
-    127, # Poly.
-    121  # Reset all controllers.
+    0x78, # All sounds off.
+    0x7B, # All notes off.
+    0x7E, # Mono.
+    0x7F, # Poly.
+    0x79  # Reset all controllers.
 ]
-    
+
+
+M32 = 0xffffffff
+M16 = 0xffff
+M8 = 0xff
+
+def m32(n):
+    return n & M32
+
+def m16(n):
+    return n & M16
+
+def m8(n):
+    return n & M8
+
+def madd(T, a, b):
+    return T(a+b)
+
+def msub(T, a, b):
+    return T(a-b)
+
+def mls(T, a, b):
+    return T(a<<b)
+
+def mrs(T, a, b):
+    return T(a >> b)
+
+def mand(T, a, b):
+    return T(a & b)
+
+def mnot(T, a):
+    return T(~a)
+
+
+def last(e):
+    return mand(m8, e, 0x80)
+
+
+def event_type(e):
+    x = mand(m8, e, 0x80)
+    return mrs(m8, x, 4)
+
+
+def channel(e):
+    return mand(m8, e, 0x0F)
+
 
 class MusDecoder:
 
     @staticmethod
     def decode_mus_to_midi(lump):
-        mus_header = MusDecoder.parse_header(lump)
-        decode_buffer = b''
+        mididata = MusDecoder.decode_mus_to_mid(lump)      
+        return MusDecoder.decode_mid_to_midi(mididata)
 
-        # Start with the MIDI header.
-        decode_buffer += struct.pack(">BBBB", ord('M'), ord('T'), ord('h'), ord('d'))
-        # Header size.
-        decode_buffer += struct.pack(">i", 6)
-        # Format (single track).
-        decode_buffer += struct.pack(">h", 0)
-        # Number of tracks.
-        decode_buffer += struct.pack(">h", 1)
-        # Delta ticks per quarter note (140).
-        decode_buffer += struct.pack(">h", 140)
-        # Track header.
-        decode_buffer += struct.pack(">BBBB", ord('M'), ord('T'), ord('r'), ord('k'))
+
+    @staticmethod
+    def decode_mid_to_midi(mididata):
+        total = len(midihdr)
+        numTracks = 0
+
+        for i in range(MIDI_TRACKS):
+            have_track = mididata.tracks[i] is not None
+
+            if have_track:
+                total += 8 + len(mididata.tracks[i])
+                numTracks += 1
+
+        mid = [] + midihdr
+        mid[10] = 0
+        mid[11] = numTracks   # set number of tracks in header
+        mid[12] = ctypes.c_uint8((mididata.divisions >> 8) & 0x7f).value
+        mid[13] = ctypes.c_uint8((mididata.divisions) & 0xff).value
+
+        # write the tracks
+        for i in range(MIDI_TRACKS):
+            have_track = mididata.tracks[i] is not None
+
+            if have_track:
+                # copy track header
+                mid += trackhdr
+
+                # write track length
+                mid += MusDecoder.writeLength( len(mididata.tracks[i]))
+
+                # copy track data
+                mid += mididata.tracks[i]
+                
+        midBuffer = b''
+        for i in mid:
+            midBuffer += struct.pack(">B", i)
         
-        # Length of the track in bytes.
-        track_size_offset = len(decode_buffer)
-        decode_buffer += struct.pack(">i", 0) # updated later on
-        
-        # The first MIDI ev sets the tempo.
-        decode_buffer += struct.pack(">B", 0)  # no delta ticks
-        decode_buffer += struct.pack(">B", 0xff)
-        decode_buffer += struct.pack(">B", 0x51)
-        decode_buffer += struct.pack(">B", 3)
-        decode_buffer += struct.pack(">B", 0xf) # Exactly one second per quarter note.
-        decode_buffer += struct.pack(">B", 0x42)
-        decode_buffer += struct.pack(">B", 0x40)
-
-        # do
-        lump_score_start_offset = mus_header['score_start']
-        logger.debug(mus_header)
-
-        # read_start from scrore start
-        print("length of music lump:", len(lump.data))
-
-        music_buf = io.BytesIO(lump.data)
-        music_buf.read(mus_header['score_start'])
-        
-        channel_volumes = list(map(lambda i: 64, range(16)))
-
-        ## -------
-
-        def get_next_event(read_time, buf):
-
-            # midi event result
-            event = {
-                'deltaTime': read_time,
-                'command': 0,
-                'size': 0,
-                'params': [0x0, 0x0]
-            }
-            
-            read_time = 0
-            musEvent = struct.unpack("<B", buf.read(1))[0]
-
-            channel = ctypes.c_uint8(musEvent & 0x80).value
-            ev = ctypes.c_uint8((musEvent & 0x7f) >> 4).value
-            last = ctypes.c_uint8(musEvent & 0x0f).value
-
-            if channel > len(channel_volumes):
-                channel = 0
-            
-            # raw mus event
-            eventDesc = {
-                'channel': channel,
-                'ev': ev,
-                'last': last
-            }
-
-            print(eventDesc)
-
-            if eventDesc['ev'] == MusEvent.PLAY_NOTE:
-                event['command'] = 0x90
-                event['size'] = 2
+        return midBuffer
                 
-                event['params'][0] = struct.unpack("<B", buf.read(1))[0]
+    
+    @staticmethod
+    def writeByte(mididata, tracknum, value):
+        mididata.tracks[tracknum].append(
+            ctypes.c_uint8(value).value
+        )
 
-                if ctypes.c_uint8(event['params'][0] & 0x80).value:
-                    channel_volumes[eventDesc['channel']] = struct.unpack("<B", buf.read(1))[0]
+    
+    @staticmethod
+    def writeVarLen(mididata, tracknum, value):
+        long_value = ctypes.c_ulong(value).value
+        buf = None
 
-                event['params'][0] = ctypes.c_uint8(event['params'][0] & 0x7f).value
-
-                i = channel_volumes[eventDesc['channel']]
-                if i > 127:
-                    i = 127
-                
-                event['params'][1] = i
-
-            elif eventDesc['ev'] == MusEvent.RELEASE_NOTE:
-                event['command'] = 0x80
-                event['size'] = 2
-                # which note??
-                event['params'][0] = struct.unpack("<B", buf.read(1))[0]
-
-            elif eventDesc['ev'] == MusEvent.CONTROLLER:
-                event['command'] = 0xb0
-                event['size'] = 2
-                event['params'][0] = struct.unpack("<B", buf.read(1))[0]
-                event['params'][1] = struct.unpack("<B", buf.read(1))[0]
-
-                if event['params'][0] == MusControllers.INSTRUMENT:
-                    event['command'] = 0xc0
-                    event['size'] = 1
-                    event['params'][0] = event['params'][1]
-                
-                else:
-                    event['params'][0] = ctrlMus2Midi[event['params'][0]]
-
-            elif eventDesc['ev'] == MusEvent.PITCH_WHEEL:
-                event['command'] = 0xe0
-                event['size'] = 2
-                
-                i = struct.unpack("<B", buf.read(1))[0]
-                i = ctypes.c_uint8(i << 6).value
-                
-                event['params'][0] = ctypes.c_uint8(i & 0x7f).value
-                event['params'][1] = ctypes.c_uint8(i >> 7).value
-
-            elif eventDesc['ev'] == MusEvent.SYSTEM:
-                event['command'] = 0xb0
-                event['size'] = 2
-                
-                i = struct.unpack("<B", buf.read(1))[0]
-                event['params'][0] = ctrlMus2Midi[i]
-
-            elif eventDesc['ev'] == MusEvent.SCORE_END:
-                logger.warn("SCORE_END")
-                return False
-
-            else:
-                logger.warn("invalid mus format")
-                return False
-
-            # choose channel
-            i = eventDesc['channel']
-
-            # redirect mus channel 16 to midid channel 10 percussion
-            if i == 15:
-                i = 9
-            elif i == 9:
-                i = 15
-            
-            event['command'] = ctypes.c_uint8(event['command'] | i).value
-
-            # check if this was the last event in a group
-            if ctypes.c_uint8(~eventDesc['last']).value:
-                return (True, event, read_time)
-
-            read_time = 0
-
-            i = struct.unpack("<B", buf.read(1))[0]
-            x = ctypes.c_uint8(i & 0x7f).value
-            read_time = ctypes.c_int((read_time << 7) + x)
-
-            while (ctypes.c_uint8(i & 0x80)).value:
-                i = struct.unpack("<B", buf.read(1))[0]
-                x = ctypes.c_uint8(i & 0x7f).value
-                read_time = ctypes.c_int((read_time << 7) + x)
-
-            return (True, event, read_time)
-        
-        ## -------
-
-        read_time = 0
-        
+        buf = ctypes.c_ulong(value & 0x7F).value
         while True:
-            ok = get_next_event(read_time, music_buf)
-            if ok is False:
+            long_value = ctypes.c_ulong(value >> 7).value
+            finished = ctypes.c_ulong(~value).value
+            if finished > 0:
                 break
 
-            ok, event, read_time = ok
+            buf = ctypes.c_ulong(buf << 8).value
+            buf = ctypes.c_ulong(buf | 0x80).value
+            buf = ctypes.c_ulong(buf + (long_value & 0x7F)).value
 
-            if event['deltaTime'] == 0:
-                decode_buffer += struct.pack(">B", 0)
-                
+        while True:
+            val = ctypes.c_uint8(buf & 0xff).value
+            MusDecoder.writeByte(mididata, tracknum, val)
+
+            if ctypes.c_ulong(buf & 0x80).value:
+                buf = ctypes.c_ulong(buf >> 8)
             else:
+                break
 
-                b = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-                i = -1
-                while event['deltaTime'] > 0:
-                    b[i] = ctypes.c_uint8(event['deltaTime'] & 0x7f)
-                    i += 1
-                    if i > 0:
-                        b[i] = ctypes.c_uint8(b[i] | 0x80).value
-                    
-                    event['deltaTime'] = ctypes.c_uint8(event['deltaTime'] >> 7).value
+    @staticmethod
+    def writeLength(value):
+        return [
+            ctypes.c_uint8((value >> 24) & 0xFF).value,
+            ctypes.c_uint8((value >> 16) & 0xFF).value,
+            ctypes.c_uint8((value >> 8) & 0xFF).value,
+            ctypes.c_uint8(value & 0xFF).value
+        ]
 
-                while i >= 0:
-                    decode_buffer += struct.pack(">B", b[i])
-                    i -= 1
 
-            decode_buffer += struct.pack(">B", event['command'])
-            for i in range(event['size']):
-                decode_buffer += struct.pack(">B", event['params'][i])
-        
-        # done
+    @staticmethod
+    def midiEvent(mididata, midicode, midiChannel, midiTrack, trackInfo, noComp):
+        newEvent = ctypes.c_uint8(midicode | midiChannel).value
+        isLastEvent = newEvent == trackInfo[midiTrack].lastEvent
 
-        decode_buffer += struct.pack(">B", 0)
-        decode_buffer += struct.pack(">B", 0xff)
-        decode_buffer += struct.pack(">B", 0x2f)
-        decode_buffer += struct.pack(">B", 0)
+        if not isLastEvent or noComp:
+            MusDecoder.writeByte(mididata, midiTrack, newEvent)
+            trackInfo[midiTrack].lastEvent = newEvent
 
-        # fix track size
-        memory_view_buffer = bytearray(decode_buffer)
-        track_size = len(decode_buffer) - track_size_offset - 4
-        fixed_track_size = struct.pack(">i", track_size)
-        
-        for i in range(len(fixed_track_size)):
-            memory_view_buffer[track_size_offset + i] = fixed_track_size[i]
-
-        return memory_view_buffer
+        return newEvent
     
 
     @staticmethod
+    def decode_mus_to_mid(lump, division=89, nocomp=True):
+        header = MusDecoder.parse_header(lump)
+        buf = io.BytesIO(lump.data)
+
+        # int
+        MUS2MIDchannel = list(map(lambda x: -1, range(MIDI_TRACKS)))
+        # ubyte
+        MIDIchan2track = list(map(lambda x: 0, range(MIDI_TRACKS)))
+
+        score_length = header['score_length']
+        score_start = header['score_start']
+        number_channels = header['channels']
+
+        # boon engine has this as score_length + score_start but that doesnt make sense
+        muslen = score_length - score_start
+        mus_empty = muslen <= 0
+        if mus_empty:
+            raise Exception('mus data empty')
+
+        too_many_channels = number_channels > 15
+        if too_many_channels:
+            raise Exception('too many channels [{0}]'.format(number_channels))
+        
+        tracks = list(map(lambda i: TrackInfo(), range(MIDI_TRACKS)))        
+        for track in tracks:
+            track.velocity = 64
+            track.deltaT = 0
+            track.lastEvent = 0
+
+        d = division
+        if ~d:
+            d = 70
+
+        mididata = Midi()
+        mididata.divisions = d
+        mididata.tracks[0] = midikey + miditempo
+        
+        buf.seek(score_start) # got to start of score
+
+        MIDIchannel = None
+        MIDItrack = None
+
+        while buf.tell() < muslen:
+
+            e = struct.unpack("<B", buf.read(1))[0]
+            event = event_type(e)
+            musChannel = channel(e)
+
+            print ("event:", event, e)
+            
+            if event == MusEvent.SCORE_END:
+                print("score_end!")
+                break
+
+            channel_not_initilized = MUS2MIDchannel[musChannel] == -1
+            if channel_not_initilized:
+                # set midi channel to miditrack
+                if musChannel == 15:
+                    MUS2MIDchannel[musChannel] = 9
+                    
+                else:
+                    maxChannel = max(MUS2MIDchannel)
+                    firstAvailable = 10 if maxChannel == 8 else maxChannel + 1
+                    MUS2MIDchannel[musChannel] = firstAvailable
+                    
+                MIDIchannel = MUS2MIDchannel[musChannel]
+                MIDItrack = MIDIchan2track[MIDIchannel] = mididata.trackCount + 1
+            
+            else:
+                MIDIchannel = MUS2MIDchannel[musChannel]
+                MIDItrack = MIDIchan2track[MIDIchannel]
+
+            MusDecoder.writeVarLen(mididata, MIDItrack, tracks[MIDItrack].deltaT)
+            tracks[MIDItrack].deltaT = 0
+
+            if event == MusEvent.RELEASE_NOTE:
+                newEvent = MusDecoder.midiEvent(mididata,
+                                                0x90,
+                                                MIDIchannel,
+                                                MIDItrack,
+                                                tracks,
+                                                True)
+
+                data = struct.unpack("<B", buf.read(1))[0]
+                MusDecoder.writeByte(mididata,
+                                     MIDItrack,
+                                     ctypes.c_uint8(data & 0x7F).value)
+                MusDecoder.writeByte(mididata,
+                                     MIDItrack,
+                                     0)
+
+            elif event == MusEvent.PLAY_NOTE:
+                newEvent = MusDecoder.midiEvent(mididata,
+                                                0x90,
+                                                MIDIchannel,
+                                                MIDItrack,
+                                                tracks,
+                                                nocomp)
+                data = struct.unpack("<B", buf.read(1))[0]
+                MusDecoder.writeByte(mididata,
+                                     MIDItrack,
+                                     ctypes.c_uint8(data & 0x7F).value)
+                
+                check = ctypes.c_uint8(data & 0x80).value
+                if check:
+                    data = struct.unpack("<B", buf.read(1))[0]
+                    tracks[MIDItrack].velocity = ctypes.c_uint8(data & 0x7F).value
+
+                MusDecoder.writeByte(mididata,
+                                     MIDItrack,
+                                     tracks[MIDItrack].velocity)
+
+            elif event == MusEvent.BEND_NOTE:
+                newEvent = MusDecoder.midiEvent(mididata,
+                                                0xE0,
+                                                MIDIchannel,
+                                                MIDItrack,
+                                                tracks,
+                                                nocomp)
+                data = struct.unpack("<B", buf.read(1))[0]
+                MusDecoder.writeByte(mididata,
+                                     MIDItrack,
+                                     ctypes.c_uint8((data & 1) << 6).value)
+                MusDecoder.writeByte(mididata,
+                                     MIDItrack,
+                                     ctypes.c_uint8(data >> 1).value)
+
+            elif event == MusEvent.SYSTEM:
+                newEvent = MusDecoder.midiEvent(mididata,
+                                                0xB0,
+                                                MIDIchannel,
+                                                MIDItrack,
+                                                tracks,
+                                                nocomp)
+                data = struct.unpack("<B", buf.read(1))[0]
+                if (data < 10) or (data > 14):
+                    raise Exception("bad system event [{0}]".format(data))
+
+                MusDecoder.writeByte(mididata,
+                                     MIDItrack,
+                                     ctrlMus2Midi[data])
+                if data == 12:
+                    val = ctypes.c_uint8(number_channels + 1).value
+                    MusDecoder.writeByte(mididata, MIDItrack, val)
+                else:
+                    MusDecoder.writeByte(mididata, MIDItrack, 0)
+
+            elif event == MusEvent.CONTROLLER:
+                data = struct.unpack("<B", buf.read(1))[0]
+                if data > 9:
+                    raise Exception("bad controller value [{0}]".format(data))
+
+                if data:
+                    newEvent = MusDecoder.midiEvent(mididata,
+                                                    0xB0,
+                                                    MIDIchannel,
+                                                    MIDItrack,
+                                                    tracks,
+                                                    nocomp)
+                    MusDecoder.writeByte(mididata,
+                                         MIDItrack,
+                                         ctrlMus2Midi[data])
+                else:
+                    newEvent = MusDecoder.midiEvent(mididata,
+                                                    0xC0,
+                                                    MIDIchannel,
+                                                    MIDItrack,
+                                                    tracks,
+                                                    nocomp)
+                    data = struct.unpack("<B", buf.read(1))[0]
+                    val = ctypes.c_uint8(data & 0x7F).value
+                    MusDecoder.writeByte(mididata, MIDItrack, val)
+
+            elif (event == MusEvent.UNKNOWN_EVENT_1) \
+                 or (event == MusEvent.UNKNOWN_EVENT_2):
+                raise Exception("bad event - unknown 1 or 2")
+
+            else:
+                raise Exception("bad event - really-unknown [{0}]".format(event))
+
+        if event != MusEvent.SCORE_END:
+            raise Exception('something wrong did not reach score-end')
+
+        for i in range(MIDI_TRACKS):
+            have_track = mididata.tracks[i] is not None
+
+            if have_track:
+                MusDecoder.writeByte(mididata, i, 0x00)
+                MusDecoder.writeByte(mididata, i, 0xFF)
+                MusDecoder.writeByte(mididata, i, 0x2F)
+                MusDecoder.writeByte(mididata, i, 0x00)
+             
+        return mididata
+            
+
+    @staticmethod
     def parse_header(lump):
-        data = lump.data
-        identifier = data[0:4].decode('utf-8').rstrip('\0')
+        data = io.BytesIO(lump.data)
+        identifier = struct.unpack("<4s", data.read(4))[0]
         score_length, \
             score_start, \
             channels, \
             sec_channels, \
             instrument_count, \
-            padding = struct.unpack("<hhhhhh", data[4:16])
+            padding = struct.unpack("<HHHHHH", data.read(12))
 
-        if "MUS" not in identifier:
+        if b"MUS" not in identifier:
             raise WadException("Invalid mus header found [%s]" % identifier)
 
         return {

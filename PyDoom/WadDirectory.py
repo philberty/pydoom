@@ -36,10 +36,5 @@ class WadDirectory:
     def ok(self):
         return self._data is not None and len(self._data) == self._size
 
-## Emulation
-
-    def __repr__(self):
-        return self.name
-
-    def __str__(self):
-        return "WadDirectory: %s @ offs %i of size %i" % (self.name, self.offset, self.size)
+    def __len__(self):
+        return self.size

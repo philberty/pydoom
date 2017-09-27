@@ -1,11 +1,13 @@
 from PyDoom.WadException import WadException
 from PyDoom.WadDirectory import WadDirectory
+from PyDoom.WadPalette import WadPlaypal
 from PyDoom.WadLevel import WadLevel
 from PyDoom import LOG as logger
 
 import struct
 import os
 import re
+
 
 WAD_HEADER_SIZE = 12
 WAD_DIRECTORY_SIZE = 16
@@ -20,7 +22,8 @@ class WadFile(dict):
     _wad_levels = {}
     _number_of_lumps = 0
     _info_table_offset = 0
-
+    _playpals = None
+    
 ## Constructor
 
     def __init__(self):
@@ -62,6 +65,10 @@ class WadFile(dict):
     @property
     def wad_levels(self):
         return self._wad_levels
+
+    @property
+    def playpals(self):
+        return self._playpals
 
 ## Methods
 
@@ -107,6 +114,9 @@ class WadFile(dict):
                 # we now have a full directory element
                 directory = WadDirectory(name, offset, size, data)
 
+                if name == "PLAYPAL":
+                    self._playpals = WadPlaypal(directory)
+
                 # Level parser
                 if re.match('E\dM\d|MAP\d\d', name):
                     self.log.debug("New Level: " + name)
@@ -115,7 +125,6 @@ class WadFile(dict):
                     current_level_lumps = {}
 
                 if is_level:
-                    self.log.debug("Adding lump [%s] to Level [%s]" % (name, current_level))
                     # add the directory to the level
                     current_level_lumps[name] = directory
 
@@ -132,7 +141,8 @@ class WadFile(dict):
                                          current_level_lumps["NODES"],
                                          current_level_lumps["SECTORS"],
                                          current_level_lumps["REJECT"],
-                                         current_level_lumps["BLOCKMAP"])
+                                         current_level_lumps["BLOCKMAP"],
+                                         self)
                         self._wad_levels[current_level] = level
 
                 # add into directory list
@@ -141,6 +151,5 @@ class WadFile(dict):
                     container.append(directory)
                 except KeyError:
                     container = [directory]
-                    self.log.debug("New Directory: " + name)
                 finally:
                     self[name] = container

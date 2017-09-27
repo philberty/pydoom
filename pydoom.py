@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from PyDoom.WadFile import WadFile
 from PyDoom.MusDecoder import MusDecoder
+from PyDoom.WadFile import WadFile
 
 import optparse
 import logging
@@ -24,17 +24,28 @@ def main():
     #     level.save_svg()
     #     print("saved image of level [%s]" % level_key)
 
-    # level = wad.wad_levels["E1M1"]
-    # for i in level.things:
-    #    print(i.thing_type)
+    level2_zombies = tuple(filter(lambda t: t.definition.name == \
+                                  "FORMER_HUMAN",
+                                  wad.wad_levels["E1M2"].things))
+
+    zombie = level2_zombies[0]
+    zombieSprite = zombie.sprite
+    
+    for zombieLumpIndex in range(len(zombieSprite)):
+        zombiePicture = zombieSprite.getDoomPicture(zombieLumpIndex)
+        zombiePrefix = zombie.definition.name + "_" + zombiePicture.name
+        zPath = zombiePrefix + '.png'
+        print("saving:", zPath)
+        zombiePicture.savePng(zPath, wad.playpals[0])
+    
 
     # to avoid conflict there can be multiple wad elements
     # of the same name so they are stored in a list
-    level_music = wad['D_E1M1'][0]
-    decoded = MusDecoder.decode_mus_to_midi(level_music)
+    # level_music = wad['D_E1M1'][0]
+    # decoded = MusDecoder.decode_mus_to_midi(level_music)
     
-    with open('encoded_e1m1.mid', 'wb') as fd:
-        fd.write(decoded)
+    # with open('encoded_e1m1.mid', 'wb') as fd:
+    #     fd.write(decoded)
     
 
 if __name__ == "__main__":
