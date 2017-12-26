@@ -85,6 +85,9 @@ class WadSprite:
         self._iterIndex += 1
         return self.getDoomPicture(index)
 
+    def __getitem__(self, index):
+        return self.getDoomPicture(index)
+
     def getDoomPicture(self, lumpIndex):
         lump = self.lumps[lumpIndex]
         width, height, left, top = WadSprite.readSpriteHeader(lump)
