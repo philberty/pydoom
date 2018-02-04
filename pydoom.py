@@ -132,6 +132,7 @@ class DoomSprite(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
+
 def main():
     parser = optparse.OptionParser()
     options, args = parser.parse_args()
@@ -144,13 +145,12 @@ def main():
 
     # to avoid conflict there can be multiple wad elements
     # of the same name so they are stored in a list
-    level_music = wad['D_E1M1'][0]
-    decoded_music = MusDecoder.decode_mus_to_midi(level_music)
+    # level_music = wad['D_E1M1'][0]
+    # decoded_music = MusDecoder.decode_mus_to_midi(level_music)
 
-    musicBytes = io.BytesIO(decoded_music)
-    pygame.mixer.music.load(musicBytes)
-    pygame.mixer.music.play()
-
+    # musicBytes = io.BytesIO(decoded_music)
+    # pygame.mixer.music.load(musicBytes)
+    # pygame.mixer.music.play()
     
     thingName = "FORMER_HUMAN"
     entities = tuple(
@@ -244,7 +244,7 @@ def main():
         doomShotgunZombieSprite.sprite = shotgunZombie.sprite[shotgunZombieIndex]
         doomShotgunZombieLabel.text = doomShotgunZombieSprite.name
 
-        time.sleep(0.1)
+        # time.sleep(0.1)
         
         
     pygame.quit()
