@@ -1,3 +1,5 @@
+from .WadSprite import WadPicture
+
 import pygame
 
 
