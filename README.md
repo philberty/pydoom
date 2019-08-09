@@ -11,3 +11,9 @@ $ brew install python3 sdl sdl_image sdl_mixer sdl_ttf smpeg portmidi
 $ pip3 install hg+http://bitbucket.org/pygame/pygame
 ```
 
+
+
+xxxxx
+
+
+1111111111

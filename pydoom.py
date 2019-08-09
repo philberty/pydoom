@@ -35,6 +35,15 @@ def main():
     with open('music.mid', 'wb') as fd:
         fd.write(decoded_music)
 
+    # test play midi file
+    import pygame
+    pygame.init()
+    pygame.mixer.music.load(decoded_music)
+    pygame.mixer.music.play()
+
+    import time
+    time.sleep(10)
+
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
