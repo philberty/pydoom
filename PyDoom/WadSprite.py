@@ -93,14 +93,14 @@ class WadSprite:
         width, height, left, top = WadSprite.readSpriteHeader(lump)
 
         buf = io.BytesIO(lump.data)
-        buf.seek(8) # offset from header
+        buf.seek(8)  # offset from header
  
-        column_array = tuple(map(lambda i: struct.unpack("<I", buf.read(4))[0],
+        column_array = tuple(map(lambda c: struct.unpack("<I", buf.read(4))[0],
                                  range(width)))
 
-        pixelData = list(map(lambda i: None, range(height)))
-        for i in range(len(pixelData)):
-            pixelData[i] = list(map(lambda i: 0, range(width)))
+        pixel_data = list(map(lambda h: None, range(height)))
+        for i in range(len(pixel_data)):
+            pixel_data[i] = list(map(lambda p: 0, range(width)))
         
         for i in range(width):
             buf.seek(column_array[i])
@@ -120,9 +120,9 @@ class WadSprite:
                     # write Pixel to image, j + rowstart = row, i = column
                     row = j + rowstart
                     column = i
-                    pixelData[row][column] = pixel
+                    pixel_data[row][column] = pixel
 
                 dummy_value = struct.unpack("<B", buf.read(1))[0]
         
-        return WadPicture(lump.name, width, height, left, top, pixelData)
+        return WadPicture(lump.name, width, height, left, top, pixel_data)
 

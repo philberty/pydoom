@@ -15,8 +15,7 @@ import sys
 import os
 import io
 
-
-logger = logging.getLogger ("pydoom")
+logger = logging.getLogger("pydoom")
 
 
 class Timer(threading.Thread):
@@ -36,7 +35,7 @@ class Timer(threading.Thread):
 
 def main():
     global zombieIndex, shotgunZombieIndex, impIndex
-    
+
     parser = optparse.OptionParser()
     options, args = parser.parse_args()
 
@@ -46,15 +45,6 @@ def main():
     input_wad_file = args[0]
     wad = WadFile.load(input_wad_file)
 
-    # to avoid conflict there can be multiple wad elements
-    # of the same name so they are stored in a list
-    # level_music = wad['D_E1M1'][0]
-    # decoded_music = MusDecoder.decode_mus_to_midi(level_music)
-
-    # musicBytes = io.BytesIO(decoded_music)
-    # pygame.mixer.music.load(musicBytes)
-    # pygame.mixer.music.play()
-    
     thingName = "FORMER_HUMAN"
     entities = tuple(
         filter(lambda t: t.definition.name == thingName,
@@ -84,12 +74,12 @@ def main():
         raise Exception('unable to find [{0}] sprite set'.format(thingName))
 
     imp = entities[0]
-    
-    pygame.init ()
+
+    pygame.init()
     width = 640
     height = 480
     screen_dimensions = width, height
-    screen = pygame.display.set_mode (screen_dimensions)
+    screen = pygame.display.set_mode(screen_dimensions)
 
     # get a thing to draw
     zombieIndex = 0
@@ -98,62 +88,62 @@ def main():
     background = pygame.Surface(screen.get_size())
     background.fill((255, 255, 255))
     screen.blit(background, (0, 0))
-    
-    doomZombieSprite = DoomSprite (zombie.sprite[zombieIndex],
-                                   wad.playpals[0])
-    doomZombieLabel = DoomLabel (doomZombieSprite.name, size=20)
-    doomZombieLabel.y = 100
 
-    doomShotgunZombieSprite = DoomSprite (shotgunZombie.sprite[shotgunZombieIndex],
-                                          wad.playpals[0])
-    doomShotgunZombieSprite.x = 150
-    
-    doomShotgunZombieLabel = DoomLabel (doomShotgunZombieSprite.name, size=20)
-    doomShotgunZombieLabel.x = 150
-    doomShotgunZombieLabel.y = 100
+    doom_zombie_sprite = DoomSprite(zombie.sprite[zombieIndex],
+                                    wad.playpals[0])
+    doom_zombie_label = DoomLabel(doom_zombie_sprite.name, size=20)
+    doom_zombie_label.y = 100
+
+    doom_shotgun_zombie_sprite = DoomSprite(shotgunZombie.sprite[shotgunZombieIndex],
+                                            wad.playpals[0])
+    doom_shotgun_zombie_sprite.x = 150
+
+    doom_shotgun_zombie_label = DoomLabel(doom_shotgun_zombie_sprite.name, size=20)
+    doom_shotgun_zombie_label.x = 150
+    doom_shotgun_zombie_label.y = 100
 
     impIndex = 0
-    doomImpSprite = DoomSprite(imp.sprite[impIndex], wad.playpals[0])
-    doomImpSprite.x = 300
-    
-    doomImpLabel = DoomLabel (doomImpSprite.name, size=20)
-    doomImpLabel.x = 300
-    doomImpLabel.y = 100
-    
-    allSprites = pygame.sprite.Group(doomZombieSprite,
-                                     doomZombieLabel,
-                                     doomShotgunZombieSprite,
-                                     doomShotgunZombieLabel,
-                                     doomImpSprite,
-                                     doomImpLabel)
-    
+    doom_imp_sprite = DoomSprite(imp.sprite[impIndex], wad.playpals[0])
+    doom_imp_sprite.x = 300
+
+    doom_imp_label = DoomLabel(doom_imp_sprite.name, size=20)
+    doom_imp_label.x = 300
+    doom_imp_label.y = 100
+
+    all_sprites = pygame.sprite.Group(doom_zombie_sprite,
+                                      doom_zombie_label,
+                                      doom_shotgun_zombie_sprite,
+                                      doom_shotgun_zombie_label,
+                                      doom_imp_sprite,
+                                      doom_imp_label)
+
     zombieIndex += 1
     shotgunZombieIndex += 1
     impIndex += 1
 
-    def timerCallback(args):
+    def timer_callback(*args):
         global zombieIndex, shotgunZombieIndex, impIndex
         zombieIndex = (zombieIndex + 1) % len(zombie.sprite)
         shotgunZombieIndex = (shotgunZombieIndex + 1) % len(shotgunZombie.sprite)
         impIndex = (impIndex + 1) % len(imp.sprite)
-    
-    timer = Timer(timerCallback, None)
+
+    timer = Timer(timer_callback, None)
     timer.start()
 
     running = True
     while running:
-        for event in pygame.event.get ():
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 timer.stop()
                 timer.join()
                 running = False
-                
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     zombieIndex += 1
                     if zombieIndex >= len(zombie.sprite):
                         zombieIndex = 0
-                
+
                 if event.key == pygame.K_LEFT:
                     zombieIndex -= 1
                     if zombieIndex == 0:
@@ -163,32 +153,31 @@ def main():
                     shotgunZombieIndex += 1
                     if shotgunZombieIndex >= len(shotgunZombie.sprite):
                         shotgunZombieIndex = 0
-                
+
                 if event.key == pygame.K_d:
                     shotgunZombieIndex -= 1
                     if shotgunZombieIndex == 0:
                         shotgunZombieIndex = len(shotgunZombie.sprite) - 1
 
-        allSprites.clear(screen, background)
-        allSprites.update()
-        allSprites.draw(screen)
-        pygame.display.flip ()
-        
-        doomZombieSprite.sprite = zombie.sprite[zombieIndex]
-        doomZombieLabel.text = doomZombieSprite.name
+        all_sprites.clear(screen, background)
+        all_sprites.update()
+        all_sprites.draw(screen)
+        pygame.display.flip()
 
-        doomShotgunZombieSprite.sprite = shotgunZombie.sprite[shotgunZombieIndex]
-        doomShotgunZombieLabel.text = doomShotgunZombieSprite.name
+        doom_zombie_sprite.sprite = zombie.sprite[zombieIndex]
+        doom_zombie_label.text = doom_zombie_sprite.name
 
-        doomImpSprite.sprite = imp.sprite[impIndex]
-        doomImpLabel.text = doomImpSprite.name
+        doom_shotgun_zombie_sprite.sprite = shotgunZombie.sprite[shotgunZombieIndex]
+        doom_shotgun_zombie_label.text = doom_shotgun_zombie_sprite.name
 
-        # time.sleep(0.1)
-        
-        
+        doom_imp_sprite.sprite = imp.sprite[impIndex]
+        doom_imp_label.text = doom_imp_sprite.name
+
+        time.sleep(0.1)
+
     pygame.quit()
-    
-    
+
+
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     main()

@@ -13,7 +13,7 @@ class WadSegment(WadElement):
     _end_vertex = None
     _angle = None
     _linedef_index = None
-    _direction = None
+    _side = None
     _offset = None
 
     def __init__(self, chunk):
@@ -22,7 +22,7 @@ class WadSegment(WadElement):
             self._end_vertex, \
             self._angle, \
             self._linedef_index, \
-            self._direction, \
+            self._side, \
             self._offset = struct.unpack("<hhhhhh", chunk)
 
     @property
@@ -42,8 +42,8 @@ class WadSegment(WadElement):
         return self._linedef_index
 
     @property
-    def direction(self):
-        return self._direction
+    def side(self):
+        return self._side
 
     @property
     def offset(self):

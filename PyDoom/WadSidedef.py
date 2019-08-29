@@ -44,6 +44,10 @@ class WadSidedef(WadElement):
     def name_of_middle_texture(self):
         return self._name_of_middle_texture
 
+    @property
+    def sector_index(self):
+        return self._sector_number
+
     @staticmethod
     def element_size():
         return 30

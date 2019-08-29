@@ -350,20 +350,20 @@ class WadThing(WadElement):
     def definition(self):
         return THING_MAP[self.thing_type]
 
-    def safeDefinition(self, default=None):
+    def safe_definition(self, default=None):
         return THING_MAP.get(self.thing_type, default)
 
-    def thingName(self, defaultName=None):
-        definition = self.safeDefinition(default=None)
+    def thing_name(self, default_name=None):
+        definition = self.safe_definition(default=None)
         if definition is None:
-            return defaultName
+            return default_name
         return definition.name
 
     @property
     def associatedLumps(self):
-        spritePrefix = self.definition.sprite
-        spriteKeys = filter(lambda i: i.startswith(spritePrefix), self._wad)
-        return tuple(map(lambda i: self._wad[i][0], spriteKeys))
+        sprite_prefix = self.definition.sprite
+        sprite_keys = filter(lambda i: i.startswith(sprite_prefix), self._wad)
+        return tuple(map(lambda i: self._wad[i][0], sprite_keys))
 
     @property
     def hasDefinition(self):

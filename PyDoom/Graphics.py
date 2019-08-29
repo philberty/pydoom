@@ -4,12 +4,12 @@ import pygame
 
 
 class DoomLabel(pygame.sprite.Sprite):
-    
+
     def __init__(self, text, font="monospace", size=15, antialised=True):
         pygame.sprite.Sprite.__init__(self)
         self._font = pygame.font.SysFont(font, size)
         self._text = text
-        self._color = (0,0,0)
+        self._color = (0, 0, 0)
         self._x = 0
         self._y = 0
         self._antialised = antialised
@@ -69,6 +69,8 @@ class DoomSprite(pygame.sprite.Sprite):
         self._playpal = playpal
         self._x = 0
         self._y = 0
+        self.image = None
+        self.rect = None
 
     @property
     def name(self):
@@ -107,14 +109,14 @@ class DoomSprite(pygame.sprite.Sprite):
         self._y = value
 
     def update(self):
-        rgbPixels = WadPicture.pixelsToRgbPixels (self.sprite.pixels,
+        rgb_pixels = WadPicture.pixelsToRgbPixels(self.sprite.pixels,
                                                   self.playpal)
-        
+
         self.image = pygame.Surface((self.sprite.width, self.sprite.height))
         for w in range(self.sprite.width):
             for h in range(self.sprite.height):
-                self.image.set_at ((w, h), rgbPixels[h][w])
-                
+                self.image.set_at((w, h), rgb_pixels[h][w])
+
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y

@@ -2,6 +2,16 @@ from PyDoom.WadElement import WadElement
 
 import struct
 
+# Linedefs contain a two-byte (16 bit) field reserved for various flags. Flags are as follows:
+# 0 0x0001	blocks players and monsters
+# 1 0x0002	blocks monsters
+# 2 0x0004	two sided
+# 3 0x0008	upper texture is unpegged
+# 4 0x0010	lower texture is unpegged
+# 5 0x0020	secret (shows as one-sided on automap), and monsters cannot open if it is a door (type 1)
+# 6 0x0040	blocks sound
+# 7 0x0080	never shows on automap
+# 8 0x0100	always shows on automap
 
 class WadLinedef(WadElement):
 
