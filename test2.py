@@ -33,6 +33,9 @@ def main():
     for i in level.things:
         print(i.definition.name)
 
+    for i in level.sub_sectors:
+        print(i)
+
     player_start = level.find_first_thing_by_name("PLAYER_1_START")
     print(player_start)
 

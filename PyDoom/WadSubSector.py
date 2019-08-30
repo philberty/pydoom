@@ -27,3 +27,6 @@ class WadSubSector(WadElement):
     @staticmethod
     def element_size():
         return 4
+
+    def __repr__(self):
+        return "WadSubSector: seg count {0} first seg index {1}".format(self.segment_count, self.first_segment_index)
