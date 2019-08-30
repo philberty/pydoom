@@ -25,7 +25,16 @@ def main():
     print("num nodes: {0}".format(len(level.nodes)))
 
     root_node = level.root_node
-    print(root_node)
+    # print(root_node)
+
+    for i in level.nodes:
+        print(i)
+
+    for i in level.things:
+        print(i.definition.name)
+
+    player_start = level.find_first_thing_by_name("PLAYER_1_START")
+    print(player_start)
 
 
 if __name__ == '__main__':

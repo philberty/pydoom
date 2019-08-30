@@ -164,6 +164,9 @@ class ThingDefinition:
     @property
     def sprite(self):
         return self._sprite
+
+    def __repr__(self):
+        return "ThingDefinition: name={0} sprite={1}".format(self._name, self._sprite)
     
 
 THING_MAP = {
@@ -384,3 +387,11 @@ class WadThing(WadElement):
     @staticmethod
     def element_size():
         return 10
+
+    def __repr__(self):
+        return "WadThing: coord {0},{1} angle {2} type {3} def {4} flags {5}".format(self._x,
+                                                                                     self._y,
+                                                                                     self._angle,
+                                                                                     self._thing_type,
+                                                                                     self.definition,
+                                                                                     self._flags)
