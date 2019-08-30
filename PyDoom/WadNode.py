@@ -60,3 +60,12 @@ class WadNode(WadElement):
     @staticmethod
     def element_size():
         return 28
+
+    def __repr__(self):
+        return "WadNode: x {0} y {1} dx {2} dy {3} rbbox {4} lbbox {5} children {6}".format(self._partition_x,
+                                                                                   self._partition_y,
+                                                                                   self._delta_x,
+                                                                                   self._delta_y,
+                                                                                   self._right_bounding_box,
+                                                                                   self._left_bounding_box,
+                                                                                   self._children)

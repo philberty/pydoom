@@ -22,7 +22,7 @@ class WadSidedef(WadElement):
         self._name_of_upper_texture = chunk[4:12].decode('utf-8').rstrip('\0')
         self._name_of_lower_texture = chunk[12:20].decode('utf-8').rstrip('\0')
         self._name_of_middle_texture = chunk[20:28].decode('utf-8').rstrip('\0')
-        self._sector_number = struct.unpack('<h', chunk[28:30])
+        self._sector_number = struct.unpack('<h', chunk[28:30])[0]
 
     @property
     def x_offset(self):

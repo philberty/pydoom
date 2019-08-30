@@ -4,6 +4,8 @@ from PyDoom.WadPalette import WadPlaypal
 from PyDoom.WadLevel import WadLevel
 from PyDoom import LOG as logger
 
+from typing import Dict
+
 import struct
 import os
 import re
@@ -63,7 +65,7 @@ class WadFile(dict):
         return self._info_table_offset
 
     @property
-    def wad_levels(self):
+    def wad_levels(self) -> Dict[str, WadLevel]:
         return self._wad_levels
 
     @property
@@ -80,8 +82,9 @@ class WadFile(dict):
             self._wad_type = fd.read(4).decode("utf-8")
             self._number_of_lumps = struct.unpack("<I", fd.read(4))[0]
             self._info_table_offset = struct.unpack("<I", fd.read(4))[0]
-            
-            if self.wad_file_type != "IWAD":
+
+            wad_types = ("IWAD", "PWAD")
+            if self.wad_file_type not in wad_types:
                 raise WadException("Found invalid wad file [%s]" % self.wad_file_type)
 
     def _load_directories(self):

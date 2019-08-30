@@ -156,7 +156,7 @@ class WadLevel:
         lines = list(map(lambda i: self.compile_line_def(i, sides), self.linedefs))
         segs = list(map(lambda s: self.compile_seg(s, lines, sides), self.segs))
 
-        return sectors, sides, lines
+        return sectors, sides, lines, segs
 
     def compile_sectors(self, wad_sector: WadSector) -> Sector:
         sector = Sector()

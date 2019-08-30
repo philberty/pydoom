@@ -55,3 +55,12 @@ class WadSector(WadElement):
     @staticmethod
     def element_size():
         return 26
+
+    def __repr__(self):
+        return "WadSector: floor_height: {0} ceiling_hight {1} floor_texture {2} ".format(self._floor_height,
+    self._ceiling_height,
+    self._floor_texture,
+    self._ceiling_texture,
+    self._light_level,
+    self._sector_type,
+    self._tag_number)

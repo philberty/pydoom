@@ -93,6 +93,8 @@ def main():
     wad = WadFile.load(input_wad_file)
 
     level = wad.wad_levels["E1M1"]
+    print(level)
+    sectors, sides, lines, segs = level.compile_level()
 
     for i in level.things:
         print(i.definition.name)
