@@ -5,6 +5,7 @@ from PyDoom.WadFile import WadFile
 import optparse
 import logging
 import pygame
+import ctypes
 import sys
 
 logger = logging.getLogger("pydoom")
@@ -66,7 +67,7 @@ class Renderer:
         return 1  # back side
 
     def render_bsp_node(self, bspnum):
-        found_sub_sector = bspnum < 0
+        found_sub_sector = bspnum & 0x8000
 
         if found_sub_sector:
             if bspnum == -1:

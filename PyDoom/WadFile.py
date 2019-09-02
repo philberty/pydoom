@@ -74,6 +74,10 @@ class WadFile(dict):
 
 ## Methods
 
+    def get_lumps_by_prefix(self, prefix):
+        possible_keys = filter(lambda i: i.startswith(prefix), self.keys())
+        return tuple(map(lambda i: self[i][0], possible_keys))
+
     def _verify(self):
         """
         Verify this is a valid WAD
@@ -108,6 +112,8 @@ class WadFile(dict):
                 size = struct.unpack("<I", current_lump[4:8])[0]
                 name = current_lump[8:16].decode('utf-8').rstrip('\0')
 
+                self.log.debug("found lump [{0}]".format(name))
+
                 # load lump data
                 data = None
                 if offset > 0:
@@ -122,7 +128,7 @@ class WadFile(dict):
 
                 # Level parser
                 if re.match('E\dM\d|MAP\d\d', name):
-                    self.log.debug("New Level: " + name)
+                    self.log.info("New Level found: {0}".format(name))
                     is_level = True
                     current_level = name
                     current_level_lumps = {}

@@ -7,6 +7,7 @@ from PyDoom.WadSegment import WadSegment
 from PyDoom.WadSubSector import WadSubSector
 from PyDoom.WadSector import WadSector
 from PyDoom.WadNode import WadNode
+from PyDoom import LOG
 
 from typing import List
 
@@ -51,7 +52,15 @@ class WadLevel:
         # find shift
         self.shift = (0 - self.lower_left[0], 0 - self.lower_left[1])
 
+        LOG.info("found lower left: {0}".format(self.lower_left))
+        LOG.info("found upper right: {0}".format(self.upper_right))
+        LOG.info("found shift: {0}".format(self.shift))
+
     ## Properties
+
+    @property
+    def log(self):
+        return LOG
 
     @property
     def name(self) -> str:
@@ -124,7 +133,7 @@ class WadLevel:
         elements = self._load_lump_elements(lump, container.element_size())
         return list(map(lambda chunk: container(chunk, *args), elements))
 
-    def _normalize(self, point):
+    def normalize(self, point):
         return self.shift[0] + point[0], self.shift[1] + point[1]
 
     def save_svg(self, path):
@@ -132,7 +141,7 @@ class WadLevel:
 
         # borrowed from https://gist.github.com/jasonsperske/42284303cf6a7ef19dc3
 
-        view_box_size = self._normalize(self.upper_right)
+        view_box_size = self.normalize(self.upper_right)
         if view_box_size[0] > view_box_size[1]:
             canvas_size = (1024, int(1024 * (float(view_box_size[1]) / view_box_size[0])))
         else:
@@ -142,9 +151,9 @@ class WadLevel:
         for line in self.linedefs:
             start = self.vertices[line.start_vertex]
             end = self.vertices[line.end_vertex]
-            a = self._normalize((start.x, start.y))
-            b = self._normalize((end.x, end.y))
-            if line.is_one_sided():
+            a = self.normalize((start.x, start.y))
+            b = self.normalize((end.x, end.y))
+            if line.is_one_sided:
                 dwg.add(dwg.line(a, b, stroke='#333', stroke_width=10))
             else:
                 dwg.add(dwg.line(a, b, stroke='#999', stroke_width=3))
@@ -177,9 +186,19 @@ class WadLevel:
 
         side.texture_offset = wad_side_def.x_offset
         side.row_offset = wad_side_def.y_offset
-        side.top_texture = None  # TODO R_TextureNumForName
-        side.bottom_texture = None  # TODO R_TextureNumForName
-        side.mid_texture = None  # TODO R_TextureNumForName
+
+        self.log.debug("top_texture [{0}]".format(wad_side_def.name_of_upper_texture))
+        self.log.debug("mid_texture [{0}]".format(wad_side_def.name_of_middle_texture))
+        self.log.debug("bottom_texture [{0}]".format(wad_side_def.name_of_lower_texture))
+
+        side.top_texture = self._wad.get_lumps_by_prefix(wad_side_def.name_of_upper_texture)
+        side.mid_texture = self._wad.get_lumps_by_prefix(wad_side_def.name_of_middle_texture)
+        side.bottom_texture = self._wad.get_lumps_by_prefix(wad_side_def.name_of_lower_texture)
+
+        print(side.top_texture)
+        print(side.mid_texture)
+        print(side.bottom_texture)
+
         side.sector = sectors[wad_side_def.sector_index]
 
         return side

@@ -19,6 +19,27 @@ class WadNode(WadElement):
     _left_bounding_box = None
     _children = None
 
+# (1)  X coordinate of partition line's start
+# (2)  Y coordinate of partition line's start
+# (3)  DX, change in X to end of partition line
+# (4)  DY, change in Y to end of partition line
+#
+#   If (1) to (4) equaled 64, 128, -64, -64, the partition line would
+# go from (64,128) to (0,64).
+
+# (5)  Y upper bound for right bounding-box.\
+# (6)  Y lower bound                         All SEGS in right child of node
+# (7)  X lower bound                         must be within this box.
+# (8)  X upper bound                        /
+# (9)  Y upper bound for left bounding box. \
+# (10) Y lower bound                         All SEGS in left child of node
+# (11) X lower bound                         must be within this box.
+# (12) X upper bound                        /
+# (13) a NODE or SSECTOR number for the right child. If bit 15 of this
+#        <short> is set, then the rest of the number represents the
+#        child SSECTOR. If not, the child is a recursed node.
+# (14) a NODE or SSECTOR number for the left child."
+
     def __init__(self, chunk):
         super(WadNode, self).__init__()
         self._partition_x, \
@@ -56,6 +77,28 @@ class WadNode(WadElement):
     @property
     def children(self):
         return self._children
+
+    @property
+    def left_child(self):
+        return self.children[1]
+
+    @property
+    def right_child(self):
+        return self.children[0]
+
+    @property
+    def is_sub_sector_right_child(self):
+        """
+        :returns true if bit 15 is set
+        """
+        return (self.right_child & WadNode.NF_SUBSECTOR) > 0
+
+    @property
+    def is_sub_sector_left_child(self):
+        """
+        :returns true if bit 15 is set
+        """
+        return (self.left_child & WadNode.NF_SUBSECTOR) > 0
 
     @staticmethod
     def element_size():

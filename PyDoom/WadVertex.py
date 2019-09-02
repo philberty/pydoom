@@ -29,4 +29,4 @@ class WadVertex(WadElement):
         return 4
 
     def __repr__(self):
-        return "WadVertex {{0},{1}}".format(self.x, self.y)
+        return "WadVertex {0} {1}".format(self.x, self.y)

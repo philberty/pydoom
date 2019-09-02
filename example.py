@@ -92,11 +92,9 @@ while running:
     # SCREEN 1: STATIC WORLD
 
     # Clear split screen
-
     split_screen.fill((0, 0, 0))
 
     # Draw wall
-
     for wall in WALLS:
         # Wall absolute positions
         x1 = wall[0][0]

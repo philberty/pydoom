@@ -146,3 +146,8 @@ class LineSeg:
     front_sector = None
     back_sector = None
 
+    def __repr__(self):
+        return "CompiledLineSeg: v1: {0} v2: {1} offset: {2} angle: {3} side: {4} line: {5}".format(self.v1, self.v2,
+                                                                                                   self.offset,
+                                                                                                   self.angle,
+                                                                                                   self.side, self.line)
