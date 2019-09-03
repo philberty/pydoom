@@ -191,13 +191,13 @@ class WadLevel:
         self.log.debug("mid_texture [{0}]".format(wad_side_def.name_of_middle_texture))
         self.log.debug("bottom_texture [{0}]".format(wad_side_def.name_of_lower_texture))
 
-        side.top_texture = self._wad.get_lumps_by_prefix(wad_side_def.name_of_upper_texture)
-        side.mid_texture = self._wad.get_lumps_by_prefix(wad_side_def.name_of_middle_texture)
-        side.bottom_texture = self._wad.get_lumps_by_prefix(wad_side_def.name_of_lower_texture)
+        side.top_texture = self._wad.lookup_texture(wad_side_def.name_of_upper_texture)
+        side.mid_texture = self._wad.lookup_texture(wad_side_def.name_of_middle_texture)
+        side.bottom_texture = self._wad.lookup_texture(wad_side_def.name_of_lower_texture)
 
-        print(side.top_texture)
-        print(side.mid_texture)
-        print(side.bottom_texture)
+        print("top:", side.top_texture)
+        print("mid:", side.mid_texture)
+        print("bottom:", side.bottom_texture)
 
         side.sector = sectors[wad_side_def.sector_index]
 

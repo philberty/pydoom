@@ -64,6 +64,7 @@ def main():
         raise Exception('unable to find [{0}] sprite set'.format(thingName))
 
     shotgunZombie = entities[0]
+    shotgunZombie.sprite[0].save_png("test_zombie.jpeg", wad.playpals[0])
 
     thingName = "IMP"
     entities = tuple(

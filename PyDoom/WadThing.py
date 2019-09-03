@@ -172,10 +172,10 @@ class ThingDefinition:
 THING_MAP = {
     0xFFFF: ThingDefinition("UNKNOWN_1", None),
     0x0000: ThingDefinition("UNKNOWN_2", None),
-    0x0001: ThingDefinition("PLAYER_1_START", "PLAY"),
-    0x0002: ThingDefinition("PLAYER_2_START", "PLAY"),
-    0x0003: ThingDefinition("PLAYER_3_START", "PLAY"),
-    0x0004: ThingDefinition("PLAYER_4_START", "PLAY"),
+    0x0001: ThingDefinition("PLAYER_1_START", None),
+    0x0002: ThingDefinition("PLAYER_2_START", None),
+    0x0003: ThingDefinition("PLAYER_3_START", None),
+    0x0004: ThingDefinition("PLAYER_4_START", None),
     0x000B: ThingDefinition("DEATHMATCH_START_POSITION", None),
     0x000E: ThingDefinition("TELEPORT_LANDING", None),
     

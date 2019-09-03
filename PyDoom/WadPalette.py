@@ -12,19 +12,19 @@ kNumColors = 256
 class WadPalette:
     
     @staticmethod
-    def loadRGB(chunk):
+    def load_rgb(chunk):
         return struct.unpack("<BBB", chunk)
 
     @staticmethod
-    def loadPalette(chunk):
+    def load_palette(chunk):
         elements = tuple(map(lambda i: chunk[i*3: (i+1)*3], range(kNumColors)))
-        return tuple(map(lambda c: WadPalette.loadRGB(c), elements))
+        return tuple(map(lambda c: WadPalette.load_rgb(c), elements))
 
     
 class WadPlaypal:
 
     def __init__(self, lump):
-        self._palettes = WadPlaypal.loadPalettes(lump)
+        self._palettes = WadPlaypal.load_palettes(lump)
 
     @property
     def palettes(self):
@@ -37,9 +37,9 @@ class WadPlaypal:
         return len(self._palettes)
 
     @staticmethod
-    def loadPalettes(lump, element_size=768):
+    def load_palettes(lump, element_size=768):
         data = lump.data
         number_of_elements = int(lump.size / element_size)
         elements = tuple(map(lambda i: data[i * element_size: (i + 1) * element_size],
                              range(number_of_elements)))
-        return tuple(map(lambda c: WadPalette.loadPalette(c), elements))
+        return tuple(map(lambda c: WadPalette.load_palette(c), elements))

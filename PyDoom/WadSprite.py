@@ -40,11 +40,16 @@ class WadPicture:
     def pixels_to_rgb_pixels(pixels, palette):
         return tuple(map(lambda r: tuple(map(lambda i: palette[i], r)), pixels))
 
-    def save_png(self, path, palette):
-        import png
+    def save_jpeg(self, path, palette):
+        import pygame
+        rgb_pixels = WadPicture.pixels_to_rgb_pixels(self.pixels, palette)
 
-        pixels = WadPicture.pixels_to_rgb_pixels(self.pixels, palette)
-        png.from_array(pixels, 'RGB').save(path)
+        image = pygame.Surface((self.width, self.height))
+        for w in range(self.width):
+            for h in range(self.height):
+                image.set_at((w, h), rgb_pixels[h][w])
+
+        pygame.image.save(image, path)
 
 
 class WadSprite:
@@ -85,23 +90,26 @@ class WadSprite:
         self._iterIndex += 1
         return self.get_doom_sprite_at_lump_index(index)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> WadPicture:
         return self.get_doom_sprite_at_lump_index(index)
 
-    def get_doom_sprite_at_lump_index(self, lump_index):
-        lump = self.lumps[lump_index]
+    def get_doom_sprite_at_lump_index(self, lump_index) -> WadPicture:
+        return WadSprite.get_wad_picture_for_lump(self.lumps[lump_index])
+
+    @staticmethod
+    def get_wad_picture_for_lump(lump) -> WadPicture:
         width, height, left, top = WadSprite.read_sprite_header(lump)
 
         buf = io.BytesIO(lump.data)
         buf.seek(8)  # offset from header
- 
+
         column_array = tuple(map(lambda c: struct.unpack("<I", buf.read(4))[0],
                                  range(width)))
 
         pixel_data = list(map(lambda h: None, range(height)))
         for i in range(len(pixel_data)):
             pixel_data[i] = list(map(lambda p: 0, range(width)))
-        
+
         for i in range(width):
             buf.seek(column_array[i])
 
@@ -116,13 +124,13 @@ class WadSprite:
 
                 for j in range(pixel_count):
                     pixel = struct.unpack("<B", buf.read(1))[0]
-                    
+
                     # write Pixel to image, j + rowstart = row, i = column
                     row = j + rowstart
                     column = i
                     pixel_data[row][column] = pixel
 
                 dummy_value = struct.unpack("<B", buf.read(1))[0]
-        
+
         return WadPicture(lump.name, width, height, left, top, pixel_data)
 

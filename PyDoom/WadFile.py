@@ -10,6 +10,8 @@ import struct
 import os
 import re
 
+from PyDoom.WadPnames import WadPnames
+from PyDoom.WadTexture import WadTexture
 
 WAD_HEADER_SIZE = 12
 WAD_DIRECTORY_SIZE = 16
@@ -25,6 +27,9 @@ class WadFile(dict):
     _number_of_lumps = 0
     _info_table_offset = 0
     _playpals = None
+    _pnames = None
+    _texture1 = None
+    _texture2 = None
     
 ## Constructor
 
@@ -72,11 +77,27 @@ class WadFile(dict):
     def playpals(self):
         return self._playpals
 
-## Methods
+    @property
+    def pnames(self):
+        return self._pnames
+
+    @property
+    def texture1(self):
+        return self._texture1
+
+    @property
+    def texture2(self):
+        return self._texture2
 
     def get_lumps_by_prefix(self, prefix):
         possible_keys = filter(lambda i: i.startswith(prefix), self.keys())
         return tuple(map(lambda i: self[i][0], possible_keys))
+
+    def lookup_texture(self, name):
+        if self._texture1 is not None and self._texture1.contains_texture(name):
+            return self._texture1.get_texture(name)
+        elif self._texture2 is not None and self._texture2.contains_texture(name):
+            return self._texture2.get_texture(name)
 
     def _verify(self):
         """
@@ -126,6 +147,19 @@ class WadFile(dict):
                 if name == "PLAYPAL":
                     self._playpals = WadPlaypal(directory)
 
+                if name == "PNAMES":
+                    self._pnames = WadPnames(directory)
+                    if self._texture1 is not None:
+                        self._texture1.compile_with_pnames(self._pnames)
+                    elif self._texture2 is not None:
+                        self._texture2.compile_with_pnames(self._pnames)
+
+                if name == "TEXTURE1":
+                    self._texture1 = WadTexture(directory)
+
+                if name == "TEXTURE2":
+                    self._texture2 = WadTexture(directory)
+
                 # Level parser
                 if re.match('E\dM\d|MAP\d\d', name):
                     self.log.info("New Level found: {0}".format(name))
@@ -162,3 +196,9 @@ class WadFile(dict):
                     container = [directory]
                 finally:
                     self[name] = container
+
+            # group them up
+            if self.texture1 is not None:
+                self.texture1.compile_with_lumps(self)
+            if self.texture2 is not None:
+                self.texture2.compile_with_lumps(self)
