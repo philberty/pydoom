@@ -11,8 +11,8 @@ import time
 import sys
 
 
-WIDTH = 1024
-HEIGHT = 768
+WIDTH = 1280
+HEIGHT = 720
 
 WALL_HEIGHT = 0.25
 CEILING_COLOR = (0, 0, 255)
@@ -29,7 +29,9 @@ def main():
     input_wad_file = args[0]
     wad = WadFile.load(input_wad_file)
 
-    level = wad.wad_levels["E1M1"]
+    level_to_render = "E1M9"
+
+    level = wad.wad_levels[level_to_render]
     sectors, sides, lines, segs = level.compile_level()
     print("num sectors: {0}".format(len(sectors)))
     print("num sides: {0}".format(len(sides)))
@@ -58,6 +60,7 @@ def main():
 
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Render Player To Level {0} {1}".format(sys.argv[1], level_to_render))
 
     player = Player()
     player.position.x = player_start.x
