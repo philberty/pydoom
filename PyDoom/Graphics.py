@@ -109,8 +109,8 @@ class DoomSprite(pygame.sprite.Sprite):
         self._y = value
 
     def update(self):
-        rgb_pixels = WadPicture.pixelsToRgbPixels(self.sprite.pixels,
-                                                  self.playpal)
+        rgb_pixels = WadPicture.pixels_to_rgb_pixels(self.sprite.pixels,
+                                                     self.playpal)
 
         self.image = pygame.Surface((self.sprite.width, self.sprite.height))
         for w in range(self.sprite.width):

@@ -320,6 +320,8 @@ class WadThing(WadElement):
     _thing_type = None
     _flags = None
 
+    _associated_lumps_cache = None
+
     def __init__(self, chunk, wad):
         super(WadThing, self).__init__()
         self._wad = wad
@@ -363,26 +365,28 @@ class WadThing(WadElement):
         return definition.name
 
     @property
-    def associatedLumps(self):
-        sprite_prefix = self.definition.sprite
-        sprite_keys = filter(lambda i: i.startswith(sprite_prefix), self._wad)
-        return tuple(map(lambda i: self._wad[i][0], sprite_keys))
+    def associated_lumps(self):
+        if self._associated_lumps_cache is None:
+            sprite_prefix = self.definition.sprite
+            sprite_keys = filter(lambda i: i.startswith(sprite_prefix), self._wad)
+            self._associated_lumps_cache = tuple(map(lambda i: self._wad[i][0], sprite_keys))
+        return self._associated_lumps_cache
 
     @property
-    def hasDefinition(self):
+    def has_definition(self):
         return self.thing_type in THING_MAP
         
     @property
-    def hasSprite(self):
-        return self.hasDefinition and self.definition.sprite is not None
+    def has_sprite(self):
+        return self.has_definition and self.definition.sprite is not None
 
     @property
     def sprite(self):
-        if not self.hasSprite:
+        if not self.has_sprite:
             raise Exception("THING [{0}] does not have an associated sprite set" \
                             .format(self.definition.name))
         
-        return WadSprite(self, self.associatedLumps)
+        return WadSprite(self, self.associated_lumps)
 
     @staticmethod
     def element_size():

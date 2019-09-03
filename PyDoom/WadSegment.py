@@ -13,8 +13,8 @@ class WadSegment(WadElement):
     _end_vertex = None
     _angle = None
     _linedef_index = None
-    _side = None
-    _offset = None
+    _side = None  # Direction: 0 (same as linedef) or 1 (opposite of linedef)
+    _offset = None  # Offset: distance along linedef to start of seg
 
     def __init__(self, chunk):
         super(WadSegment, self).__init__()

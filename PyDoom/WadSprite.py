@@ -37,13 +37,13 @@ class WadPicture:
         return self._pixels
 
     @staticmethod
-    def pixelsToRgbPixels(pixels, palette):
+    def pixels_to_rgb_pixels(pixels, palette):
         return tuple(map(lambda r: tuple(map(lambda i: palette[i], r)), pixels))
 
-    def savePng(self, path, palette):
+    def save_png(self, path, palette):
         import png
 
-        pixels = WadPicture.pixelsToRgbPixels(self.pixels, palette)        
+        pixels = WadPicture.pixels_to_rgb_pixels(self.pixels, palette)
         png.from_array(pixels, 'RGB').save(path)
 
 
@@ -62,7 +62,7 @@ class WadSprite:
         return self._lumps
 
     @staticmethod
-    def readSpriteHeader(lump):
+    def read_sprite_header(lump):
         data = io.BytesIO(lump.data)
         width, \
             height, \
@@ -83,14 +83,14 @@ class WadSprite:
         
         index = self._iterIndex
         self._iterIndex += 1
-        return self.getDoomPicture(index)
+        return self.get_doom_sprite_at_lump_index(index)
 
     def __getitem__(self, index):
-        return self.getDoomPicture(index)
+        return self.get_doom_sprite_at_lump_index(index)
 
-    def getDoomPicture(self, lumpIndex):
-        lump = self.lumps[lumpIndex]
-        width, height, left, top = WadSprite.readSpriteHeader(lump)
+    def get_doom_sprite_at_lump_index(self, lump_index):
+        lump = self.lumps[lump_index]
+        width, height, left, top = WadSprite.read_sprite_header(lump)
 
         buf = io.BytesIO(lump.data)
         buf.seek(8)  # offset from header
