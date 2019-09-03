@@ -185,7 +185,7 @@ THING_MAP = {
     0x0041: ThingDefinition("HEAVY_WEAPON_DUDE", "CPOS"),
     0x0BB9: ThingDefinition("IMP", "TROO"),
     0x0BBA: ThingDefinition("DEMON", "SARG"),
-    0x0B3A: ThingDefinition("SPECTRE", "SARG"),
+    0x003A: ThingDefinition("SPECTRE", "SARG"),
     0x0BBE: ThingDefinition("LOST_SOUL", "SKUL"),
     0x0BBD: ThingDefinition("CACODEMON", "HEAD"),
     0x0045: ThingDefinition("HELL_KNIGHT", "BOS2"),
