@@ -1,5 +1,7 @@
 from typing import Tuple
 
+from PyDoom.WadTexture import WadTexture
+
 
 class SlopeType:
     ST_HORIZONTAL = 0
@@ -93,9 +95,9 @@ class SideDef:
     row_offset = None
 
     # Texture indices. We do not maintain names here.
-    top_texture = None
-    bottom_texture = None
-    mid_texture = None
+    top_texture: WadTexture = None
+    bottom_texture: WadTexture = None
+    mid_texture: WadTexture = None
 
     # Sector the SideDef is facing.
     sector = None
@@ -145,6 +147,10 @@ class LineSeg:
     # Sector references. Could be retrieved from linedef, too. backsector is NULL for one sided lines
     front_sector = None
     back_sector = None
+
+    @property
+    def is_one_sided(self):
+        return self.front_sector is None or self.back_sector is None
 
     def __repr__(self):
         return "CompiledLineSeg: v1: {0} v2: {1} offset: {2} angle: {3} side: {4} line: {5}".format(self.v1, self.v2,

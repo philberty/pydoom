@@ -14,7 +14,7 @@ import sys
 WIDTH = 1280
 HEIGHT = 720
 
-WALL_HEIGHT = 0.25
+WALL_HEIGHT = 50
 CEILING_COLOR = (0, 0, 255)
 FLOOR_COLOR = (255, 255, 0)
 
@@ -40,8 +40,6 @@ def main():
     print("num nodes: {0}".format(len(level.nodes)))
     print("num vertexes: {0}".format(len(level.vertices)))
     print("num subsectors: {0}".format(len(level.sub_sectors)))
-
-    level.save_svg('./test.svg')
 
     for i in level.nodes:
         print(i)
@@ -82,18 +80,23 @@ def main():
             player.angle = player.angle + ROT_SPEED
 
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            player.move_player_pos(1, 0)
+            player.move_player_pos(3, 0)
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            player.move_player_pos(-1, 0)
+            player.move_player_pos(-3, 0)
         if keys[pygame.K_d]:
-            player.move_player_pos(1, 90)
+            player.move_player_pos(3, 180)
         if keys[pygame.K_a]:
-            player.move_player_pos(-1, 90)
+            player.move_player_pos(-3, 180)
 
         # video buffer
         split_screen = pygame.Surface((WIDTH, HEIGHT))
         # clear
         split_screen.fill((0, 0, 0))
+
+        # Draw wall, floor and ceiling
+
+        pygame.draw.rect(split_screen, CEILING_COLOR, pygame.Rect(0, 0, WIDTH, HEIGHT / 2))
+        pygame.draw.rect(split_screen, FLOOR_COLOR, pygame.Rect(0, HEIGHT / 2, WIDTH, HEIGHT / 2))
 
         for line in segs:
             # Wall absolute positions
@@ -114,20 +117,45 @@ def main():
             rx2 = math.cos(rad(-player.angle)) * px2 + math.sin(rad(-player.angle)) * py2
             ry2 = math.cos(rad(-player.angle)) * py2 - math.sin(rad(-player.angle)) * px2
 
-            begin = (rx1, ry1)
-            end = (rx2, ry2)
-            pygame.draw.line(split_screen, (150, 150, 150),
-                             screen_coords(rx1, ry1),
-                             screen_coords(rx2, ry2), 1)
+            # Don't render walls behind us
+            if ry1 <= 0 and ry2 <= 0:
+                continue
 
-        # Draw player
+            # Clip walls intersecting with user plane
+            if ry1 <= 0 or ry2 <= 0:
+                ix1 = intersect(rx1, ry1, rx2, ry2)
+                if ry1 <= 0:
+                    rx1 = ix1
+                    ry1 = 0.01
+                if ry2 <= 0:
+                    rx2 = ix1
+                    ry2 = 0.01
 
-        pygame.draw.line(split_screen, PLAYER_RAY_COLOR,
-                         screen_coords(0, 0),
-                         screen_coords(0, RAY_LENGTH), 1)
-        pygame.draw.line(split_screen, PLAYER_COLOR,
-                         screen_coords(0, 0),
-                         screen_coords(0, 0), 1)
+            # Wall positions relative to player's position, rotation and perspective
+            zx1 = rx1 / ry1
+            zu1 = WALL_HEIGHT / ry1  # Up   Z
+            zd1 = -WALL_HEIGHT / ry1  # Down Z
+            zx2 = rx2 / ry2
+            zu2 = WALL_HEIGHT / ry2  # Up   Z
+            zd2 = -WALL_HEIGHT / ry2  # Down Z
+
+            # zx1 = rx1 / ry1
+            # zu1 = WALL_HEIGHT / ry1  # Up   Z
+            # zd1 = -WALL_HEIGHT / ry1  # Down Z
+            # zx2 = rx2 / ry2
+            # zu2 = WALL_HEIGHT / ry2  # Up   Z
+            # zd2 = -WALL_HEIGHT / ry2  # Down Z
+
+            poly = pygame.draw.polygon(split_screen, (100, 200, 150), [
+                screen_coords_test(zx1, zd1),
+                screen_coords_test(zx1, zu1),
+                screen_coords_test(zx2, zu2),
+                screen_coords_test(zx2, zd2)], 0)
+
+            #if line.side.top_texture:
+            #    for t in line.side.top_texture.textures:
+            #        for patch in t.patches:
+
 
         # Render split screen
         screen.blit(split_screen, (0, 0))

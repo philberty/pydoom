@@ -15,3 +15,7 @@ def intersect(x1, y1, x2, y2):
 
 def screen_coords(x, y, screen_width=1280, screen_height=720):
     return (x + (screen_width / 2)), (-y + (screen_height / 2))
+
+
+def screen_coords_test(x, y, screen_width=1280, screen_height=720):
+    return (x / 2 + 0.5) * screen_width, (-y / 2 + 0.5) * screen_height
