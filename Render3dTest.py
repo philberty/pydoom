@@ -11,8 +11,8 @@ import time
 import sys
 
 
-WIDTH = 1280
-HEIGHT = 720
+WIDTH = 640
+HEIGHT = 480
 
 WALL_HEIGHT = 50
 CEILING_COLOR = (0, 0, 255)

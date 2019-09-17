@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from PyDoom.WadFile import WadFile
 from PyDoom.PlayerState import Player
 from PyDoom.MathUtils import *
@@ -11,8 +13,8 @@ import time
 import sys
 
 
-WIDTH = 1280
-HEIGHT = 720
+WIDTH = 640
+HEIGHT = 480
 
 WALL_HEIGHT = 0.25
 CEILING_COLOR = (0, 0, 255)

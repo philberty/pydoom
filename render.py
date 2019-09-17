@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 from PyDoom.WadFile import WadFile
+from PyDoom.WadLevel import WadLevel
 
 import optparse
 import logging
 import pygame
-import ctypes
 import sys
 
 logger = logging.getLogger("pydoom")
@@ -13,25 +13,20 @@ logger = logging.getLogger("pydoom")
 
 class Renderer:
 
-    def __init__(self, level):
+    def __init__(self, level: WadLevel, camera):
         self._level = level
-        self.view_x = 0
-        self.view_y = 0
-        self.sub_sector_count = 0
+        self._camera = camera
+
+    @property
+    def level(self):
+        return self._level
+
+    @property
+    def camera(self):
+        return self._camera
 
 
-    def front_sector_for_sub_sector(self, sub):
-        pass
-
-    def render_subsector(self, sub_sector_index):
-        self.sub_sector_count = self.sub_sector_count + 1
-        sub = self.level.sub_sectors[sub_sector_index]
-
-
-
-    # On the computers that I work with a negative value expressed as an unsigned would be a number greater than 0x8000000
-    # https://stackoverflow.com/questions/28500263/c-recoding-malloc-how-to-detect-a-negative-size-used-in-the-call
-    def point_on_side(self, x, y, node):
+    def point_on_side(self, node):
 
         # node is vertical
         if ~node.delta_x:
