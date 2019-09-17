@@ -207,7 +207,7 @@ def main():
     print(root_node)
 
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH * 2, HEIGHT))
     pygame.display.set_caption("Render Player To Level {0} {1}".format(sys.argv[1], level_to_render))
 
     player = Player()
@@ -241,7 +241,7 @@ def main():
             player.move_player_pos(-3, 180)
 
         # video buffer
-        split_screen = pygame.Surface((WIDTH, HEIGHT))
+        split_screen = pygame.Surface((WIDTH * 2, HEIGHT))
         # clear
         split_screen.fill((0, 0, 0))
 
@@ -254,6 +254,48 @@ def main():
 
         # Render split screen
         screen.blit(split_screen, (0, 0))
+
+        # render map BEGIN
+
+        split_screen.fill((0, 0, 0))
+
+        for line in segs:
+            # Wall absolute positions
+            x1 = line.v1.x
+            y1 = line.v1.y
+            x2 = line.v2.x
+            y2 = line.v2.y
+
+            # Wall positions relative to player's position
+            px1 = x1 - player.position.x
+            py1 = y1 - player.position.y
+            px2 = x2 - player.position.x
+            py2 = y2 - player.position.y
+
+            # Wall positions relative to player's position and rotation
+            rx1 = math.cos(rad(-player.angle)) * px1 + math.sin(rad(-player.angle)) * py1
+            ry1 = math.cos(rad(-player.angle)) * py1 - math.sin(rad(-player.angle)) * px1
+            rx2 = math.cos(rad(-player.angle)) * px2 + math.sin(rad(-player.angle)) * py2
+            ry2 = math.cos(rad(-player.angle)) * py2 - math.sin(rad(-player.angle)) * px2
+
+            begin = (rx1, ry1)
+            end = (rx2, ry2)
+            pygame.draw.line(split_screen, (150, 150, 150),
+                             screen_coords(rx1, ry1),
+                             screen_coords(rx2, ry2), 1)
+
+        # Draw player
+
+        pygame.draw.line(split_screen, PLAYER_RAY_COLOR,
+                             screen_coords(0, 0),
+                             screen_coords(0, RAY_LENGTH), 1)
+        pygame.draw.line(split_screen, PLAYER_COLOR,
+                             screen_coords(0, 0),
+                             screen_coords(0, 0), 1)
+
+        screen.blit(split_screen, (WIDTH, 0))
+
+        # render map DONE
 
         # Update screen
         pygame.display.update()
