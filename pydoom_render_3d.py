@@ -22,6 +22,19 @@ FLOOR_COLOR = (255, 255, 0)
 
 
 class Renderer:
+    checkcoord = [
+        [3, 0, 2, 1],
+        [3, 0, 2, 0],
+        [3, 1, 2, 0],
+        [0],
+        [2, 0, 2, 1],
+        [0, 0, 0, 0],
+        [3, 1, 3, 0],
+        [0],
+        [2, 0, 3, 1],
+        [2, 1, 3, 1],
+        [2, 1, 3, 0]
+    ]
 
     def __init__(self, level: WadLevel, camera: Player, lines):
         self._level = level
@@ -43,16 +56,21 @@ class Renderer:
     def surface(self):
         return self._surface
 
-    def point_on_side(self, node: WadNode):
+    @property
+    def lines_to_draw(self):
+        return self._lines_to_draw
 
+    def point_on_side(self, node: WadNode):
         # node is vertical
-        if ~node.delta_x:
+        if node.delta_x > 0:
+            print(1)
             if self.camera.position.x <= node.partiton_x:
                 return 1 if node.delta_y > 0 else 0
             return 1 if node.delta_y < 0 else 0
 
         # node is horizontal
-        if ~node.delta_y:
+        if node.delta_y > 0:
+            print(2)
             if self.camera.position.y <= node.partition_y:
                 return 1 if node.delta_x < 0 else 0
             return 1 if node.delta_x > 0 else 0
@@ -60,15 +78,6 @@ class Renderer:
         # calculate node to POV vector
         dx = self.camera.position.x - node.partiton_x
         dy = self.camera.position.y - node.partition_y
-
-        # Given a set of numbers where all elements occur even number of times except one number, find the odd occurring number
-        # int arr[] = {12, 12, 14, 90, 14, 14, 14};
-        # XOR sum will return 90
-        if (node.delta_y ^ node.delta_x ^ dx ^ dy) < 0:
-            if (node.delta_y ^ dx) < 0:
-                # left is negative
-                return 1
-            return 0
 
         # cross product here
         left = node.delta_y * dx
@@ -80,7 +89,6 @@ class Renderer:
 
     def render_sub_sector(self, sub_sector_index):
         sub_sector = self.level.sub_sectors[sub_sector_index]
-        print(sub_sector)
 
         first_seg_index = sub_sector.first_segment_index
         num_lines = sub_sector.segment_count
@@ -88,6 +96,50 @@ class Renderer:
         for seg_index in range(first_seg_index, first_seg_index+num_lines):
             seg = self.level.segs[seg_index]
             self._lines_to_draw.append(self._lines[seg.linedef_index])
+
+    def check_bounding_box(self, bspcoord):
+        BOXTOP = 0
+        BOXBOTTOM = 1
+        BOXLEFT = 2
+        BOXRIGHT = 3
+
+        boxx = 0
+        boxy = 0
+
+        if self.camera.position.x <= bspcoord[BOXLEFT]:
+            boxx = 0
+        elif self.camera.position.x < bspcoord[BOXRIGHT]:
+            boxx = 1
+        else:
+            boxx = 2
+
+        if self.camera.position.y >= bspcoord[BOXTOP]:
+            boxy = 0
+        elif self.camera.position.y > bspcoord[BOXBOTTOM]:
+            boxy = 1
+        else:
+            boxy = 2
+
+        boxpos = (boxy << 2) + boxx
+        if boxpos == 5:
+            return 1
+
+        x1 = bspcoord[self.checkcoord[boxpos][0]]
+        y1 = bspcoord[self.checkcoord[boxpos][1]]
+        x2 = bspcoord[self.checkcoord[boxpos][2]]
+        y2 = bspcoord[self.checkcoord[boxpos][3]]
+
+        # check clip list for an open space
+        angle1 = math.atan(x1 / y1) - self.camera.angle
+        angle2 = math.atan(x2 / y2) - self.camera.angle
+
+        span = angle1 - angle2
+
+        # Sitting on a line?
+        if span >= 180:
+            return 1
+
+        return 0
 
     def render_bsp_node(self, bspnum):
         found_sub_sector = bspnum & 0x8000 == 0x8000
@@ -97,15 +149,17 @@ class Renderer:
                 self.render_sub_sector(0)
             else:
                 maybe_node = bspnum + 0x8000
-                print("maybe:", bin(maybe_node), bin(bspnum), bin(~0x8000))
                 self.render_sub_sector(maybe_node)
             return
 
         bsp = self._level.nodes[bspnum]
         side = self.point_on_side(bsp)
-        print("side: ", side)
 
         self.render_bsp_node(bsp.children[side])
+
+        # Possibly divide back space.
+        if self.check_bounding_box(bsp.bounding_box_for_index(side ^ 1)):
+            self.render_bsp_node(bsp.children[side ^ 1])
 
     def draw(self, surface):
         for line in self._lines_to_draw:
@@ -148,13 +202,6 @@ class Renderer:
             zx2 = rx2 / ry2
             zu2 = WALL_HEIGHT / ry2  # Up   Z
             zd2 = -WALL_HEIGHT / ry2  # Down Z
-
-            # zx1 = rx1 / ry1
-            # zu1 = WALL_HEIGHT / ry1  # Up   Z
-            # zd1 = -WALL_HEIGHT / ry1  # Down Z
-            # zx2 = rx2 / ry2
-            # zu2 = WALL_HEIGHT / ry2  # Up   Z
-            # zd2 = -WALL_HEIGHT / ry2  # Down Z
 
             poly = pygame.draw.polygon(surface, (100, 200, 150), [
                 screen_coords_test(zx1, zd1),
@@ -207,7 +254,7 @@ def main():
     print(root_node)
 
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH * 2, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH * 3, HEIGHT))
     pygame.display.set_caption("Render Player To Level {0} {1}".format(sys.argv[1], level_to_render))
 
     player = Player()
@@ -241,7 +288,7 @@ def main():
             player.move_player_pos(-3, 180)
 
         # video buffer
-        split_screen = pygame.Surface((WIDTH * 2, HEIGHT))
+        split_screen = pygame.Surface((WIDTH * 3, HEIGHT))
         # clear
         split_screen.fill((0, 0, 0))
 
@@ -256,45 +303,13 @@ def main():
         screen.blit(split_screen, (0, 0))
 
         # render map BEGIN
-
         split_screen.fill((0, 0, 0))
-
-        for line in segs:
-            # Wall absolute positions
-            x1 = line.v1.x
-            y1 = line.v1.y
-            x2 = line.v2.x
-            y2 = line.v2.y
-
-            # Wall positions relative to player's position
-            px1 = x1 - player.position.x
-            py1 = y1 - player.position.y
-            px2 = x2 - player.position.x
-            py2 = y2 - player.position.y
-
-            # Wall positions relative to player's position and rotation
-            rx1 = math.cos(rad(-player.angle)) * px1 + math.sin(rad(-player.angle)) * py1
-            ry1 = math.cos(rad(-player.angle)) * py1 - math.sin(rad(-player.angle)) * px1
-            rx2 = math.cos(rad(-player.angle)) * px2 + math.sin(rad(-player.angle)) * py2
-            ry2 = math.cos(rad(-player.angle)) * py2 - math.sin(rad(-player.angle)) * px2
-
-            begin = (rx1, ry1)
-            end = (rx2, ry2)
-            pygame.draw.line(split_screen, (150, 150, 150),
-                             screen_coords(rx1, ry1),
-                             screen_coords(rx2, ry2), 1)
-
-        # Draw player
-
-        pygame.draw.line(split_screen, PLAYER_RAY_COLOR,
-                             screen_coords(0, 0),
-                             screen_coords(0, RAY_LENGTH), 1)
-        pygame.draw.line(split_screen, PLAYER_COLOR,
-                             screen_coords(0, 0),
-                             screen_coords(0, 0), 1)
-
+        render_map(player, render.lines_to_draw, split_screen)
         screen.blit(split_screen, (WIDTH, 0))
 
+        split_screen.fill((0, 0, 0))
+        render_map(player, segs, split_screen)
+        screen.blit(split_screen, (WIDTH * 2, 0))
         # render map DONE
 
         # Update screen
@@ -306,6 +321,40 @@ def main():
         prev_time = new_time
         if diff_time < FRAME_MIN:
             time.sleep(FRAME_MIN - diff_time)
+
+
+def render_map(player, segs, split_screen):
+    for line in segs:
+        # Wall absolute positions
+        x1 = line.v1.x
+        y1 = line.v1.y
+        x2 = line.v2.x
+        y2 = line.v2.y
+
+        # Wall positions relative to player's position
+        px1 = x1 - player.position.x
+        py1 = y1 - player.position.y
+        px2 = x2 - player.position.x
+        py2 = y2 - player.position.y
+
+        # Wall positions relative to player's position and rotation
+        rx1 = math.cos(rad(-player.angle)) * px1 + math.sin(rad(-player.angle)) * py1
+        ry1 = math.cos(rad(-player.angle)) * py1 - math.sin(rad(-player.angle)) * px1
+        rx2 = math.cos(rad(-player.angle)) * px2 + math.sin(rad(-player.angle)) * py2
+        ry2 = math.cos(rad(-player.angle)) * py2 - math.sin(rad(-player.angle)) * px2
+
+        begin = (rx1, ry1)
+        end = (rx2, ry2)
+        pygame.draw.line(split_screen, (150, 150, 150),
+                         screen_coords(rx1, ry1),
+                         screen_coords(rx2, ry2), 1)
+    # Draw player
+    pygame.draw.line(split_screen, PLAYER_RAY_COLOR,
+                     screen_coords(0, 0),
+                     screen_coords(0, RAY_LENGTH), 1)
+    pygame.draw.line(split_screen, PLAYER_COLOR,
+                     screen_coords(0, 0),
+                     screen_coords(0, 0), 1)
 
 
 if __name__ == '__main__':

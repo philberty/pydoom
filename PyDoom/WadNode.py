@@ -91,14 +91,17 @@ class WadNode(WadElement):
         """
         :returns true if bit 15 is set
         """
-        return (self.right_child & WadNode.NF_SUBSECTOR) > 0
+        return (self.right_child & WadNode.NF_SUBSECTOR) == WadNode.NF_SUBSECTOR
 
     @property
     def is_sub_sector_left_child(self):
         """
         :returns true if bit 15 is set
         """
-        return (self.left_child & WadNode.NF_SUBSECTOR) > 0
+        return (self.left_child & WadNode.NF_SUBSECTOR) == WadNode.NF_SUBSECTOR
+
+    def bounding_box_for_index(self, index: int):
+        return self.right_bounding_box if index == 0 else self.right_bounding_box
 
     @staticmethod
     def element_size():

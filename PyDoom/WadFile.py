@@ -1,5 +1,6 @@
 from PyDoom.WadException import WadException
 from PyDoom.WadDirectory import WadDirectory
+from PyDoom.WadFlat import WadFlat
 from PyDoom.WadPalette import WadPlaypal
 from PyDoom.WadLevel import WadLevel
 from PyDoom import LOG as logger
@@ -30,6 +31,7 @@ class WadFile(dict):
     _pnames = None
     _texture1 = None
     _texture2 = None
+    _flats = {}
     
 ## Constructor
 
@@ -89,6 +91,10 @@ class WadFile(dict):
     def texture2(self):
         return self._texture2
 
+    @property
+    def flats(self):
+        return self._flats
+
     def get_lumps_by_prefix(self, prefix):
         possible_keys = filter(lambda i: i.startswith(prefix), self.keys())
         return tuple(map(lambda i: self[i][0], possible_keys))
@@ -121,6 +127,8 @@ class WadFile(dict):
             is_level = False
             current_level = None
             current_level_lumps = None
+            is_reading_flats = False
+            is_reading_shareware_flats = False
 
             # read in directories
             for i in range(self.number_of_lumps):
@@ -159,6 +167,23 @@ class WadFile(dict):
 
                 if name == "TEXTURE2":
                     self._texture2 = WadTexture(directory)
+
+                if is_reading_flats or is_reading_shareware_flats:
+                    if name.endswith("_START") or name.endswith("_END"):
+                        continue
+                    self._flats[name] = WadFlat.parse(directory)
+
+                if name == "F_START":
+                    is_reading_flats = True
+
+                if name == "F_END":
+                    is_reading_flats = False
+
+                if name == "F1_START":
+                    is_reading_shareware_flats = True
+
+                if name == "F1_END":
+                    is_reading_shareware_flats = False
 
                 # Level parser
                 if re.match('E\dM\d|MAP\d\d', name):

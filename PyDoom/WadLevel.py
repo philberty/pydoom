@@ -52,10 +52,6 @@ class WadLevel:
         # find shift
         self.shift = (0 - self.lower_left[0], 0 - self.lower_left[1])
 
-        LOG.info("found lower left: {0}".format(self.lower_left))
-        LOG.info("found upper right: {0}".format(self.upper_right))
-        LOG.info("found shift: {0}".format(self.shift))
-
     ## Properties
 
     @property
@@ -172,8 +168,8 @@ class WadLevel:
 
         sector.floor_height = wad_sector.floor_height
         sector.ceiling_height = wad_sector.ceiling_height
-        sector.floor_pic = None  # TODO - R_FlatNumForName
-        sector.ceiling_pic = None  # TODO - R_FlatNumForName
+        sector.floor_pic = self._wad.flats[wad_sector.floor_texture]
+        sector.ceiling_pic = self._wad.flats[wad_sector.ceiling_texture]
         sector.light_level = wad_sector.light_level
         sector.special = wad_sector.sector_type
         sector.tag = wad_sector.tag_number
@@ -187,17 +183,9 @@ class WadLevel:
         side.texture_offset = wad_side_def.x_offset
         side.row_offset = wad_side_def.y_offset
 
-        self.log.debug("top_texture [{0}]".format(wad_side_def.name_of_upper_texture))
-        self.log.debug("mid_texture [{0}]".format(wad_side_def.name_of_middle_texture))
-        self.log.debug("bottom_texture [{0}]".format(wad_side_def.name_of_lower_texture))
-
         side.top_texture = self._wad.lookup_texture(wad_side_def.name_of_upper_texture)
         side.mid_texture = self._wad.lookup_texture(wad_side_def.name_of_middle_texture)
         side.bottom_texture = self._wad.lookup_texture(wad_side_def.name_of_lower_texture)
-
-        print("top:", side.top_texture)
-        print("mid:", side.mid_texture)
-        print("bottom:", side.bottom_texture)
 
         side.sector = sectors[wad_side_def.sector_index]
 

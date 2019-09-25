@@ -99,7 +99,7 @@ class WadSprite:
     @staticmethod
     def get_wad_picture_for_lump(lump) -> WadPicture:
         width, height, left, top = WadSprite.read_sprite_header(lump)
-
+        print("picture: {0},{1},{2},{3}".format(width, height, left, top))
         buf = io.BytesIO(lump.data)
         buf.seek(8)  # offset from header
 
