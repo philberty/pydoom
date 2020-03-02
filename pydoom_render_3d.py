@@ -1,4 +1,4 @@
-from PyDoom.WadFile import WadFile
+Gfrom PyDoom.WadFile import WadFile
 from PyDoom.PlayerState import Player
 from PyDoom.WadLevel import WadLevel
 from PyDoom.MathUtils import *
@@ -360,3 +360,4 @@ def render_map(player, segs, split_screen):
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     main()
+    
